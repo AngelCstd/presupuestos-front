@@ -519,6 +519,7 @@ Cualquier test que dependa de la fecha actual la calcula **en tiempo de ejecuci�
 | `overdue-periods.test.ts` | Con varias vencidas, solo la más antigua es cerrable. Fechas calculadas en runtime |
 | `i18n.test.ts` | Cada `kind`, `status`, `rolloverType` y `budgetImpact` tiene traducción. Ningún término del glosario aparece fuera de `es.ts` |
 | `session-policy.test.ts` | `readSessionState`: cookie ausente / válida / expirada / malformada → nunca lanza. `sessionActionFor`: `expired` → `refresh`, **no** `redirect-login`. `none` en ruta protegida → `redirect-login` conservando `next`. `now` siempre por parámetro |
+| `api-client.test.ts` | **Agregado en la sesión de tests — U7 lo pedía en su propio texto y §5.2 no lo listaba; era omisión, no decisión.** Cualquier respuesta no-2xx → `ApiError` con `code`/`statusCode`/`details`. `200` y `201` tratados idénticamente. El body nunca incluye `userId` |
 
 **Cero tests de render, snapshot o e2e.** Son caros, frágiles y no atrapan lo que rompe.
 
@@ -551,6 +552,15 @@ deriveEnvelopeStatus(p: {
 isLateCaptureNote(note: string | null): boolean
 extractTransactionIdFromNote(note: string | null): string | null
 
+// lib/domain/periods.ts
+// NUEVO — no estaba en el árbol de archivos de ARCHITECTURE-front.md §15.
+// selectClosablePeriod es lógica pura (qué periodo vencido se ofrece cerrar);
+// vive junto a las otras primitivas de dominio por la misma razón que ellas: es testeable sin red y sin UI.
+selectClosablePeriod(
+  openPeriods: readonly { id: string; endsOn: string; status: PeriodStatus }[],
+  today: string,
+): { id: string; endsOn: string; status: PeriodStatus } | null
+
 // lib/supabase/session-policy.ts
 type SessionState = 'none' | 'valid' | 'expired'
 type SessionAction = 'allow' | 'refresh' | 'redirect-login'
@@ -562,6 +572,32 @@ errorMessageFor(code: string): string
 
 // lib/query/invalidation.ts
 invalidationFor(mutation: MutationName): readonly QueryKey[]
+
+// lib/bff/allowlist.ts
+// NUEVO — U9 solo fijaba el tipo AllowedRoute y la constante ALLOWLIST (§6.2);
+// la función de emparejamiento no tenía firma. table es opcional y cae en ALLOWLIST por default —
+// existe como parámetro solo para que el test pueda ejercitar la lógica de matching con tablas pequeñas controladas.
+isAllowedRoute(method: HttpMethod, path: string, table?: readonly AllowedRoute[]): boolean
+
+// lib/bff/forward.ts
+// NUEVO — contractError ya aparecía nombrada en ARCHITECTURE §4.2 como snippet; forwardToApi no tenía firma.
+// fetchImpl inyectable es la razón por la que esto es testeable sin red real.
+// `headers` son los headers crudos del navegador; forwardToApi filtra a la lista
+// blanca (content-type) antes de reenviar — idempotencyKey se maneja aparte porque
+// además se valida como UUID. Sin esto, "solo se reenvían content-type e
+// idempotency-key" (ARCHITECTURE §4.1) no era verificable con una llamada pura.
+contractError(statusCode: number, code: string, path: string): { statusCode: number; code: string; message: string; timestamp: string; path: string }
+forwardToApi(
+  params: { method: HttpMethod; path: string; body?: unknown; accessToken: string; idempotencyKey?: string; headers?: Record<string, string> },
+  fetchImpl?: typeof fetch,
+): Promise<{ status: number; body: unknown }>
+
+// lib/api/client.ts
+// NUEVO — U7 no fijaba el nombre del cliente HTTP. Mismo patrón de fetchImpl inyectable que forwardToApi.
+apiRequest<T>(
+  params: { method: HttpMethod; path: string; body?: unknown; accessToken: string; idempotencyKey?: string },
+  fetchImpl?: typeof fetch,
+): Promise<T>
 ```
 
 ### 6.2 Constantes y clases
