@@ -134,7 +134,12 @@ describe('forwardToApi — IDEMPOTENCY_IN_FLIGHT se reintenta hasta 3 veces', ()
   });
 
   it('un cuarto 409 IN_FLIGHT consecutivo sí sube', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(inFlightResponse());
+    // mockImplementation, no mockResolvedValue: cada llamada necesita su propio
+    // Response — el body de un Response solo se puede leer una vez, y las 4 llamadas
+    // sí leen su body (igual que pasaría contra un fetch real). Corregido durante el
+    // loop de implementación (2026-08-16): era un bug del mock, no de forwardToApi.
+    // Ver PROGRESS.md.
+    const fetchImpl = vi.fn().mockImplementation(() => Promise.resolve(inFlightResponse()));
 
     const resultPromise = forwardToApi(
       {

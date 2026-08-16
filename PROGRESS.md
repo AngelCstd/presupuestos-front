@@ -1,5 +1,120 @@
 # PROGRESS.md
 
+## 2026-08-16 — Sesión 1 de implementación
+
+**207/207 tests en verde.** Quedaron implementadas todas las unidades que tienen
+tests propios en el grafo de §3, hasta donde el grafo lo permite sin bloquear en U8b
+(que exige credenciales reales de Supabase, acción humana pendiente) o en trabajo de
+UI (que no tiene test dedicado, por decisión explícita de "cero tests de render").
+
+### Verde
+
+| Unidad | Archivo(s) | Tests |
+|---|---|---|
+| U2 | `lib/domain/money.ts` | `money`, `sign-rule`, `split` — 23 |
+| U3 | `lib/domain/dates.ts` | `dates` — 7 |
+| U4 | `lib/domain/envelopes.ts` | `envelopes` — 5 |
+| U5 | `lib/domain/late-capture.ts` | `late-capture` — 9 |
+| U6 | `lib/i18n/{es,errors}.ts` | `errors`, `i18n` — 73 |
+| U7 | `lib/api/client.ts` | `api-client` — 5 |
+| U8a | `lib/supabase/session-policy.ts` | `session-policy` — 9 |
+| U9 | `lib/bff/{allowlist,forward}.ts` | `allowlist`, `bff-forward` — 13 |
+| U10 | `lib/query-keys.ts`, `lib/query/invalidation.ts` | `query-keys`, `invalidation` — 42 |
+| U12 | `features/capture/stores/draft-store.ts` | `draft-store`, `idempotency`, `unauthorized-recovery` — 15 |
+| U14 (parcial) | `lib/domain/periods.ts` | `overdue-periods` — 6 |
+
+Los seis comandos de la condición de paro, por separado:
+
+- `pnpm typecheck` ✓
+- `pnpm lint` ✓ (después de agregar `next-env.d.ts` a `ignores` — ver más abajo)
+- `pnpm test -- --run` ✓ 207/207
+- `pnpm build` ✓
+- `pnpm verify:tests-untouched` ✗ — **por una razón correcta**: hay dos ediciones de
+  test autorizadas explícitamente por el usuario, sin comitear todavía (ver abajo). En
+  cuanto se comiteen, esta puerta cierra.
+- `pnpm verify:suite` ✓ — cero saltados, cero todo, cero fallidos, conteo y archivos
+  correctos.
+
+### Rojo — qué sigue y por qué
+
+- **U8b** (adaptador de Supabase) — bloqueado por acción humana: necesita
+  `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` reales (TASK-front.md §8,
+  puntos 1–4). Sin tests propios; verificación humana.
+- **U11** (servicios por feature), **U13** (componentes base) — sin tests propios,
+  dependen de U9/U10 (ya verdes) pero son trabajo de UI/wiring que esta sesión no iba a
+  tocar sola sin más contexto de dónde seguir.
+- **U14 completa** (layouts, tab bar, FAB, banners, guard) — la lógica pura
+  (`selectClosablePeriod`) ya está verde; falta el layout real, que depende de U11-U13.
+- **U15–U23** (pantallas) — sin empezar. Dependen de U14 completa, y la dirección
+  visual sigue "Pendiente" por decisión explícita (ARCHITECTURE §18.1).
+
+### Dos ediciones de test — ambas autorizadas explícitamente, ninguna decidida por mí
+
+**1. `money.test.ts` — el valor esperado de USD, no la lógica.**
+`TASK-front.md` afirmaba que `Intl.NumberFormat('es-MX', { currency: 'USD' })`
+produce `"US$700.00"`. En este runtime (Node v22.14, ICU actual) produce
+`"USD 700.00"` (con espacio de no separación, U+00A0) — verificado probando
+`symbol`, `narrowSymbol` y `code` como `currencyDisplay`; ninguno da `"US$"`. Forzarlo
+habría exigido escribir el símbolo a mano, que es justo lo que la regla prohíbe.
+Reporté el hallazgo, el usuario confirmó que el test estaba mal y autorizó corregir
+esa única aserción. `formatMoney` quedó implementado fiel al contrato (BigInt para
+toda la aritmética; `Intl.formatToParts` solo para aprender símbolo y separadores,
+nunca para formatear el número). `TASK-front.md` §4/U2 sigue sin corregirse — vale la
+pena que alguien lo revise, porque el ejemplo que trae ahí ya no es reproducible.
+
+**2. `bff-forward.test.ts` — el mock, no la aserción.**
+La prueba "un cuarto 409 IN_FLIGHT consecutivo sí sube" reusaba el mismo objeto
+`Response` en las 4 llamadas simuladas (`mockResolvedValue(inFlightResponse())`), y el
+body de un `Response` solo se puede leer una vez — la segunda llamada a `forwardToApi`
+fallaba al leer un body ya consumido, cortando el reintento en 2 llamadas en vez de 4.
+`forwardToApi` lee el body una vez por intento, que es lo correcto contra un `fetch`
+real (cada llamada trae su propio `Response`). Encontré esto al implementar el
+reintento de verdad — en la sesión de tests, con todo lanzando `not implemented`, este
+camino nunca se ejercitó de verdad. Se lo planteé al usuario como una corrección
+mecánica de una línea (`mockResolvedValue` → `mockImplementation`) y me autorizó
+proceder directamente sin forzar una pregunta de opción múltiple sin sentido.
+
+### Cambios de configuración sin pedir permiso (autorizado de antemano por el usuario)
+
+`eslint.config.mjs`: agregado `next-env.d.ts` a `ignores`. Ese archivo lo regenera
+`next build`/`next dev` solo, con una referencia triple-slash que es el boilerplate
+estándar de Next — no algo que se escriba a mano, y no estaba excluido del lint. El
+usuario autorizó de antemano corregir este tipo de hueco (archivo autogenerado que
+rompe una puerta de config, no de comportamiento) sin pausar a preguntar.
+
+También: `@typescript-eslint/no-unused-vars` se ajustó a `args: 'none'` durante la
+sesión de tests (no esta) porque los stubs declaraban parámetros sin usar a propósito.
+Ya no hace falta — todo lo implementado en esta sesión sí usa sus parámetros — pero se
+deja así porque no hay ninguna razón para endurecerlo de vuelta a mitad de un loop
+todavía en curso (quedan U11, U13 y las pantallas, que van a tener la misma forma).
+
+### Trampas que no estaban documentadas
+
+- **`Intl.NumberFormat('es-MX', { style: 'currency', currency: 'USD' })` no produce
+  `"US$"` en Node/ICU actual — produce `"USD 700.00"`.** Ver la corrección de
+  arriba. Si `TASK-front.md` no se actualiza, la próxima sesión que lea el §4/U2 va a
+  confundirse con el mismo ejemplo desactualizado.
+- **Formatear un monto exacto arriba de 2^53 con `Intl` de verdad exige no dejar que
+  el número pase por `Intl.NumberFormat.format()` en absoluto.** La técnica que
+  funcionó: `formatToParts(±1)` para leer solo el símbolo/separadores/orden de las
+  partes, y ensamblar el número real con aritmética `BigInt` + agrupación de miles
+  hecha a mano. `Intl.NumberFormat.format()` con el `BigInt` real tampoco sirve
+  directamente para injertar: hay que reconstruir las `parts`.
+- **Reusar el mismo objeto `Response` en un mock de `fetch` para más de una llamada es
+  un bug silencioso**: el body solo se puede leer una vez (`TypeError: Body is
+  unusable`), y si el código bajo prueba atrapa ese error como "JSON inválido" (como
+  debe hacerlo `forwardToApi`, por diseño), el mock roto se disfraza de fallo real.
+  `mockImplementation(() => new Response(...))` — una instancia nueva por llamada — es
+  el patrón correcto para simular reintentos contra `fetch`.
+- **`vi.useFakeTimers()` + una promesa que puede rechazar antes de que el test la
+  espere** (por ejemplo, mientras se avanza el reloj falso con
+  `vi.advanceTimersByTimeAsync`) dispara "Unhandled Rejection" en Vitest aunque el test
+  sí la espere más adelante. `promise.catch(() => {})` inmediatamente después de
+  crearla, antes de avanzar el reloj, lo evita sin cambiar el resultado de la prueba.
+- **El reporter JSON de Vitest 3.x nombra cada archivo de test en
+  `testResults[].name`** (ruta absoluta), no en `.testFilePath` — ese campo no existe
+  en esta versión. Documentado también en la entrada anterior de este archivo.
+
 ## 2026-08-15/16 — Sesión de tests (pre-implementación)
 
 Entregó la suite de tests completa del `TASK-front.md`, la infraestructura de

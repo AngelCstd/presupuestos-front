@@ -1,17 +1,22 @@
 /**
- * STUB — sesión de tests. La implementación real (U5, TASK-front.md) todavía no existe.
- * Acoplada a un detalle de implementación del backend, no al contrato — ver
- * ARCHITECTURE-front.md §14. `LATE_CAPTURE_NOTE_PREFIX` es una forma fijada (TASK §6.2)
- * pero se deja en un valor deliberadamente incorrecto: esta sesión no implementa nada,
- * ni siquiera datos triviales, para que ningún test de esta suite pase por accidente.
+ * Acoplado a un detalle de implementación del backend, no al contrato — ver
+ * ARCHITECTURE-front.md §14. Todo el acoplamiento vive en este archivo.
  */
 
-export const LATE_CAPTURE_NOTE_PREFIX = '';
+// Raya larga U+2014, no un guión ASCII (ARCHITECTURE-front.md §14). El prefijo es literal.
+export const LATE_CAPTURE_NOTE_PREFIX = 'Ajuste por captura tardía';
+
+const NOTE_PREFIX_WITH_DASH = `${LATE_CAPTURE_NOTE_PREFIX} —`;
+
+const NOTE_PATTERN = /^Ajuste por captura tardía — tx ([0-9a-f-]{36}), fecha \d{4}-\d{2}-\d{2}$/;
 
 export function isLateCaptureNote(note: string | null): boolean {
-  throw new Error('isLateCaptureNote: not implemented');
+  if (note === null) return false;
+  return note.startsWith(NOTE_PREFIX_WITH_DASH);
 }
 
 export function extractTransactionIdFromNote(note: string | null): string | null {
-  throw new Error('extractTransactionIdFromNote: not implemented');
+  if (note === null) return null;
+  const match = NOTE_PATTERN.exec(note);
+  return match?.[1] ?? null;
 }

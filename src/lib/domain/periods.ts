@@ -1,14 +1,17 @@
 import type { PeriodStatus } from '@/types/api';
 
 /**
- * STUB — sesión de tests. Archivo NUEVO, no listado en el árbol de ARCHITECTURE-front.md §15.
- * Firma propuesta por la sesión de tests (no fijada en el contrato ni en la arquitectura
- * original) y aprobada + agregada a TASK-front.md §6.1. Ver PROGRESS.md.
+ * De varias quincenas vencidas, solo la más antigua se ofrece cerrar — los cierres van
+ * en orden cronológico y la API rechaza el desordenado (API-CONTRACT.md §15.2).
+ * `endsOn` es inclusivo: una quincena vencida es una cuyo `endsOn` es ANTERIOR a hoy,
+ * no igual (API-CONTRACT.md §12.1).
  */
-
 export function selectClosablePeriod(
   openPeriods: readonly { id: string; endsOn: string; status: PeriodStatus }[],
   today: string,
 ): { id: string; endsOn: string; status: PeriodStatus } | null {
-  throw new Error('selectClosablePeriod: not implemented');
+  const overdue = openPeriods.filter((period) => period.status === 'open' && period.endsOn < today);
+  if (overdue.length === 0) return null;
+
+  return overdue.reduce((oldest, current) => (current.endsOn < oldest.endsOn ? current : oldest));
 }

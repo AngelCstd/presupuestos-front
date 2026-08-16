@@ -1,15 +1,13 @@
 /**
- * STUB — sesión de tests. La implementación real (U12, TASK-front.md) todavía no existe.
+ * Funciones puras sobre un `DraftStorage` inyectable (misma forma que `Storage` del
+ * DOM), para no acoplar la lógica de idempotencia a `sessionStorage` real. El
+ * implementador de `useDraft` (el hook de React) las envuelve con Zustand + `persist`
+ * sobre `sessionStorage` real — nunca `localStorage` (ARCHITECTURE-front.md §7): un
+ * borrador de hace tres días trae una llave de idempotencia inútil.
  *
- * `Draft<T>` está en ARCHITECTURE-front.md §7, pero U12 no fija firmas de función
- * (§6.1 de TASK-front.md no lo cubre). Esta sesión propone las funciones puras de abajo
- * — documentado en PROGRESS.md — para poder testear el ciclo de la llave de idempotencia
- * sin sessionStorage real: `DraftStorage` es la misma forma que `Storage` del DOM
- * (getItem/setItem/removeItem), inyectable, para no depender de jsdom.
- *
- * `useDraft` (el hook de React mencionado en TASK-front.md U12) se deja fuera de esta
- * sesión: ningún test lo ejercita directamente — todos prueban estas funciones puras —
- * y es responsabilidad del implementador envolverlas en Zustand + `persist`.
+ * Regla central (ARCHITECTURE-front.md §6): una llave por INTENCIÓN del usuario, no por
+ * intento HTTP. Se genera una vez al abrir el formulario, se reusa en cada reintento, y
+ * se borra solo con un 2xx.
  */
 
 export interface Draft<T = unknown> {
@@ -25,21 +23,50 @@ export interface DraftStorage {
 }
 
 export function draftStorageKey(intent: string): string {
-  throw new Error('draftStorageKey: not implemented');
+  return `draft:${intent}`;
 }
 
 export function loadDraft<T>(intent: string, storage: DraftStorage): Draft<T> | null {
-  throw new Error('loadDraft: not implemented');
+  const raw = storage.getItem(draftStorageKey(intent));
+  if (raw === null) return null;
+
+  try {
+    return JSON.parse(raw) as Draft<T>;
+  } catch {
+    return null;
+  }
+}
+
+function persistDraft<T>(intent: string, draft: Draft<T>, storage: DraftStorage): Draft<T> {
+  storage.setItem(draftStorageKey(intent), JSON.stringify(draft));
+  return draft;
 }
 
 export function openDraft<T>(intent: string, initialValues: T, storage: DraftStorage): Draft<T> {
-  throw new Error('openDraft: not implemented');
+  // Si ya hay un borrador vigente, se reusa tal cual — su llave y sus valores, no los
+  // que trae el formulario en blanco que se está abriendo (TASK-front.md U12: "se reusa
+  // la llave que traía, no una nueva").
+  const existing = loadDraft<T>(intent, storage);
+  if (existing !== null) return existing;
+
+  const draft: Draft<T> = {
+    idempotencyKey: crypto.randomUUID(),
+    values: initialValues,
+    savedAt: new Date().toISOString(),
+  };
+  return persistDraft(intent, draft, storage);
 }
 
 export function updateDraft<T>(intent: string, values: T, storage: DraftStorage): Draft<T> {
-  throw new Error('updateDraft: not implemented');
+  const existing = loadDraft<T>(intent, storage);
+  const draft: Draft<T> = {
+    idempotencyKey: existing?.idempotencyKey ?? crypto.randomUUID(),
+    values,
+    savedAt: new Date().toISOString(),
+  };
+  return persistDraft(intent, draft, storage);
 }
 
 export function clearDraft(intent: string, storage: DraftStorage): void {
-  throw new Error('clearDraft: not implemented');
+  storage.removeItem(draftStorageKey(intent));
 }

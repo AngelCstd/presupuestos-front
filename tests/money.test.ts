@@ -24,7 +24,14 @@ describe('formatMoney', () => {
   });
 
   it('con currency USD, el símbolo sale de Intl — nunca concatenado a mano', () => {
-    expect(formatMoney('70000', 'USD')).toBe('US$700.00');
+    // Corregido por instrucción explícita del usuario (2026-08-16): TASK-front.md
+    // afirmaba "US$700.00", pero Intl.NumberFormat('es-MX', { currency: 'USD' })
+    // realmente produce "USD 700.00" en este runtime — no existe combinación de
+    // opciones de Intl que dé "US$" para este locale/moneda. Forzar "US$" habría
+    // exigido escribir el símbolo a mano, que es justo lo que esta regla prohíbe.
+    // El espacio entre "USD" y el monto es U+00A0 (espacio de no separación), el que
+    // Intl realmente produce — no un espacio normal. Ver PROGRESS.md.
+    expect(formatMoney('70000', 'USD')).toBe('USD 700.00');
   });
 
   it('una moneda que no es ISO 4217 cae a MXN sin lanzar', () => {
