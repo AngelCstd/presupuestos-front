@@ -11,83 +11,131 @@ import type { Category } from '@/types/api';
 
 export interface CategoryCardProps {
   category: Category;
-  onSetAllocation: (targetAssignedCents: string) => void;
-  onCoverOverspend: () => void;
+  onSetAllocation?: (targetAssignedCents: string) => void;
+  onCoverOverspend?: () => void;
   saving?: boolean;
+  compact?: boolean;
 }
 
-/**
- * Cada tarjeta trae nombre, los tres montos del periodo y el estado con su color, más
- * un campo para fijar lo asignado (SCREENS-front.md — mapa de pantallas de sobres).
- * `no_budget` se pinta visiblemente distinto de `depleted`: sin el monto que muestran
- * los otros tres estados, no "$0.00" (TASK-front.md U17).
- */
-export function CategoryCard({ category, onSetAllocation, onCoverOverspend, saving }: CategoryCardProps) {
+export function CategoryCard({
+  category,
+  onSetAllocation,
+  onCoverOverspend,
+  saving,
+  compact = false,
+}: CategoryCardProps) {
   const period = category.period;
   const [draftAmount, setDraftAmount] = useState(period?.assignedCents ?? '0');
 
   if (!period) return null;
 
   const isNoBudget = period.status === 'no_budget';
-  const isOverspentFromClosedPeriod = period.status === 'overspent' && period.spentCents === '0';
+  const isOverspent = period.status === 'overspent';
+  const isDepleted = period.status === 'depleted';
+  const isOverspentFromClosedPeriod = isOverspent && period.spentCents === '0';
+
+  const assigned = BigInt(period.assignedCents);
+  const spent = BigInt(period.spentCents);
+  const percentage = assigned > 0n ? Math.min(Number((spent * 100n) / assigned), 100) : 0;
+
+  let progressColor = 'bg-state-available';
+  if (isOverspent) progressColor = 'bg-state-overspent';
+  else if (isDepleted) progressColor = 'bg-state-depleted';
+
+  let cardBorder = 'border-border bg-background';
+  if (isOverspent) {
+    cardBorder = 'border-state-overspent/50 bg-muted-background/30';
+  } else if (isNoBudget) {
+    cardBorder = 'border-dashed border-border/80 bg-muted-background/10';
+  }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
+    <div className={`flex flex-col gap-3 rounded-lg border p-4 ${cardBorder}`}>
       <div className="flex items-center justify-between">
-        <Link href={`/sobres/${category.id}`} className="font-medium text-foreground underline-offset-2 hover:underline">
+        <Link
+          href={`/sobres/${category.id}`}
+          className="font-medium text-foreground underline-offset-2 hover:underline"
+        >
           {category.name}
         </Link>
-        <EnvelopeStatusBadge status={period.status} />
+        <div className="flex items-center gap-2">
+          <EnvelopeStatusBadge status={period.status} />
+          {compact && isOverspent && onCoverOverspend ? (
+            <button
+              type="button"
+              onClick={onCoverOverspend}
+              className="rounded bg-state-overspent/10 px-2 py-0.5 text-xs font-medium text-state-overspent underline"
+            >
+              {es.envelopeCard.coverAction}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {isNoBudget ? (
-        <p className="text-sm text-muted">{es.envelopeStatus.no_budget}</p>
+        <p className="text-xs text-muted">{es.envelopeCard.noBudgetPrompt}</p>
       ) : (
-        <dl className="grid grid-cols-3 gap-2 text-sm">
-          <div>
-            <dt className="text-muted">{es.field.assignedCents}</dt>
-            <dd className="text-foreground">
-              <Money cents={period.assignedCents} />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted">{es.field.spentCents}</dt>
-            <dd className="text-foreground">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted">
               <Money cents={period.spentCents} />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted">{es.field.availableCents}</dt>
-            <dd className={period.status === 'overspent' ? 'text-state-overspent' : 'text-foreground'}>
+              {es.envelopeCard.spentOf}
+              <Money cents={period.assignedCents} />
+            </span>
+            <span
+              className={`font-semibold ${
+                isOverspent ? 'text-state-overspent' : 'text-foreground'
+              }`}
+            >
               <Money cents={period.availableCents} />
-            </dd>
+            </span>
           </div>
-        </dl>
+
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+        </div>
       )}
 
       {isOverspentFromClosedPeriod ? (
-        <p className="text-sm text-muted">
-          Es un gasto del periodo pasado, ya cerrado. Se cubre con esta.
+        <p className="rounded bg-state-overspent/5 p-2 text-xs text-muted leading-relaxed">
+          {es.envelopeCard.lateCaptureNotice}
         </p>
       ) : null}
 
-      <div className="flex items-center gap-2">
-        <AmountInput value={draftAmount} onChange={setDraftAmount} className="max-w-[10rem]" />
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          loading={saving}
-          onClick={() => onSetAllocation(draftAmount)}
-        >
-          Guardar
-        </Button>
-      </div>
+      {!compact && onSetAllocation ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-2">
+          <div className="flex items-center gap-2">
+            <AmountInput
+              value={draftAmount}
+              onChange={setDraftAmount}
+              className="max-w-[8.5rem]"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              loading={saving}
+              onClick={() => onSetAllocation(draftAmount)}
+            >
+              {es.envelopeCard.saveAction}
+            </Button>
+          </div>
 
-      {period.status === 'overspent' ? (
-        <Button type="button" size="sm" variant="danger" onClick={onCoverOverspend}>
-          Cubrir
-        </Button>
+          {isOverspent && onCoverOverspend ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="danger"
+              onClick={onCoverOverspend}
+            >
+              {es.envelopeCard.coverAction}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

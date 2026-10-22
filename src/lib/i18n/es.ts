@@ -87,6 +87,15 @@ const nav = {
   mas: 'Más',
 } as const;
 
+const envelopeCard = {
+  noBudgetPrompt: 'Sin presupuesto asignado este periodo',
+  lateCaptureNotice:
+    'Gasto registrado con fecha de un periodo ya cerrado. Se cubre con el presupuesto de este periodo.',
+  saveAction: 'Guardar',
+  coverAction: 'Cubrir',
+  spentOf: ' gastados de ',
+} as const;
+
 const inicio = {
   noPeriodTitle: 'No hay periodo abierto',
   noPeriodDescription: 'Tus gastos se siguen registrando, pero no cuentan en ningún presupuesto.',
@@ -137,4 +146,5 @@ export const es = {
   intent,
   nav,
   inicio,
+  envelopeCard,
 } as const;
