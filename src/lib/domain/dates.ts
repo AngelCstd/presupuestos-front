@@ -22,3 +22,20 @@ export function formatInstant(iso: string, timeZone: string): string {
     timeStyle: 'short',
   }).format(instant);
 }
+
+/**
+ * Agregada en U18 (2026-08-17): ya estaba nombrada en el árbol original de
+ * ARCHITECTURE-front.md §8 ("dates.ts todayInTimeZone, formatInstant,
+ * isDateInClosedPeriod") pero TASK-front.md §6.1 nunca la fijó, así que la sesión de
+ * tests no le escribió test. Extraída aquí como función pura para que /capturar/gasto
+ * pueda avisar ANTES de guardar si la fecha cae en un periodo cerrado
+ * (TASK-front.md U18), en vez de enterrar esa lógica dentro del componente. Sin test
+ * propio todavía — pendiente para una sesión de tests, anotado en PROGRESS.md; no lo
+ * escribe el implementador.
+ */
+export function isDateInClosedPeriod(
+  date: string,
+  periods: readonly { startsOn: string; endsOn: string; status: 'open' | 'closed' }[],
+): boolean {
+  return periods.some((period) => period.status === 'closed' && date >= period.startsOn && date <= period.endsOn);
+}

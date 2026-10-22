@@ -1,3 +1,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Dirección visual (2026-08-16): minimalista, crema + negro suave + acento sage.
+ * Único archivo que cambia — los componentes se construyeron contra nombres de
+ * token precisamente para esto (ARCHITECTURE-front.md §13).
+ *
+ * Contraste verificado contra WCAG AA (fórmula de luminancia relativa de la propia
+ * especificación), pares texto/fondo — la app se usa en la calle, con luz de sol:
+ *
+ *   foreground   sobre background   14.48:1
+ *   foreground   sobre surface      12.89:1
+ *   muted        sobre background    5.24:1  (AA texto normal, 4.5:1 mínimo)
+ *   primary      sobre background    5.38:1  (AA texto normal — nav activo, links)
+ *   white        sobre primary       5.76:1  (AA texto normal — botones, FAB)
+ *   danger       sobre background    6.05:1
+ *   white        sobre danger        6.47:1
+ *
+ * Los tonos "apagados" (#8A9A7B / #9CAF88) que definen la familia del acento sage NO
+ * pasan AA como texto sobre el fondo crema (2.2–2.8:1) — por eso `--color-primary` es
+ * una variante más oscura de la misma familia, no el tono decorativo original. Si se
+ * necesita el sage claro para un fill decorativo grande (no texto), se deriva con
+ * opacidad sobre `--color-primary`, no con un tono nuevo sin verificar.
+ */
+:root {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --color-background: #faf7f0; /* crema cálido, no blanco puro */
+  --color-foreground: #262420; /* negro suave, no #000 */
+  --color-muted: #6b6858;
+  --color-muted-background: #f0ead9; /* crema un paso más profundo — tarjetas/superficies */
+  --color-border: #a89c7d;
+
+  --color-primary: #5b6b4a; /* sage apagado, oscurecido lo justo para pasar AA como texto */
+  --color-primary-foreground: #ffffff;
+
+  --color-danger: #b91c1c;
+  --color-danger-foreground: #ffffff;
+
+  --color-success: #5b6b4a; /* mismo tono que primary: éxito = refuerzo positivo de marca */
+  --color-success-foreground: #ffffff;
+
+  /*
+   * Los cuatro estados de sobre — cada uno con una razón distinta para el color que
+   * tiene, no solo "cuatro que se ven diferente":
+   *
+   * no_budget (5.92:1 vs foreground, 3.27:1 vs background — nivel de componente UI,
+   *   no de texto de párrafo): un gris cálido apagado, deliberadamente el menos
+   *   saturado de los cuatro. Léase "ausencia" — no compite por atención, se sale de
+   *   la conversación de color en vez de ser "un estado más". Combinar con
+   *   text-foreground encima (como en Badge), no usarlo como color de texto suelto.
+   *
+   * available (5.13:1 vs background): azul apagado, frío — deliberadamente NO es el
+   *   verde sage de la marca. El acento ya vive en botones, nav y FAB; si "disponible"
+   *   fuera del mismo verde, un sobre con dinero se confundiría con la interfaz
+   *   misma. El azul lee "tranquilo, en orden" sin pedir prestado el color de marca.
+   *
+   * depleted (5.21:1 vs background): un ocre/café templado. Ni la alarma del rojo ni
+   *   la calma del azul — es el más neutro de los cuatro a propósito ("se acabó", sin
+   *   más juicio que ese). Cálido para no leerse como un gris apagado más y
+   *   confundirse con no_budget.
+   *
+   * overspent (6.05:1 vs background): rojo, el mismo que --color-danger. Es alerta
+   *   real y tiene que destacar — reusar el rojo de "algo salió mal" es intencional,
+   *   no un descuido: un sobregiro y un error de formulario comparten el mismo
+   *   lenguaje visual de "esto necesita atención".
+   */
+  --state-no-budget: #8f8974;
+  --state-available: #3b6e91;
+  --state-depleted: #8a5f35;
+  --state-overspent: #b91c1c;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  line-height: 1.6;
+  /*
+   * Números tabulares: las cifras de dinero en listas alinean por ancho fijo en vez
+   * de bailar (TASK visual, 2026-08-16). Global porque ni Money ni Balance tienen una
+   * clase propia que targetear sin tocar el componente — aplicarlo en body es seguro:
+   * no afecta texto no numérico y ayuda a cualquier lista de números, no solo dinero.
+   */
+  font-variant-numeric: tabular-nums;
+}

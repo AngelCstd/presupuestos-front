@@ -18,7 +18,7 @@ Vive en `lib/i18n/es.ts`. Ningún componente escribe estas palabras a mano.
 | `account` (`kind: receivable`) | Te deben | |
 | `category` | **Sobre** | Nunca "categoría" |
 | `income_source` | Fuente de ingreso | |
-| `period` | **Quincena** | |
+| `period` | **Periodo** | Antes "Quincena" — cambiado el 2026-08-24: la app admite cualquier rango de fechas (API-CONTRACT.md §17 ya sugería "Periodo" como alternativa), y "Quincena" describe mal un rango mensual o de cualquier otra duración |
 | `allocation` | Asignación | |
 | `recurring template` | Recordatorio | |
 | `reversal` | Corrección | |
@@ -64,9 +64,9 @@ Vive en `lib/i18n/es.ts`. Ningún componente escribe estas palabras a mano.
 | API | Interfaz |
 |---|---|
 | `in_open_period` | *(no se muestra nada)* |
-| `no_period` | Este movimiento no cae en ninguna quincena |
-| `compensated` | Ajustado en la quincena actual |
-| `uncompensated` | Sin quincena donde ajustar |
+| `no_period` | Este movimiento no cae en ningún periodo |
+| `compensated` | Ajustado en el periodo actual |
+| `uncompensated` | Sin periodo donde ajustar |
 
 ### Prohibido en la UI
 
@@ -95,7 +95,7 @@ Tab bar: **Inicio · Sobres · Movimientos · Más**. FAB abajo a la derecha →
 
 **Al confirmar, en orden:** `POST /accounts` → `POST /transactions/opening-balances` (una sola llamada, con `Idempotency-Key`) → `POST /categories` × N → `POST /income-sources` × N → `/` .
 
-**Lo que NO hace:** crear la primera quincena ni asignar presupuesto. Eso pasa en las pantallas normales, que ya existen. Más cuentas también se agregan después, por el camino normal.
+**Lo que NO hace:** crear el primer periodo ni asignar presupuesto. Eso pasa en las pantallas normales, que ya existen. Más cuentas también se agregan después, por el camino normal.
 
 **Vacío:** no aplica — esta pantalla *es* el estado vacío de la app.
 
@@ -107,15 +107,15 @@ Tab bar: **Inicio · Sobres · Movimientos · Más**. FAB abajo a la derecha →
 
 **Bloques, en orden:** Por asignar (el número grande) · Sobres del periodo (resumen) · Saldos de cuentas · Últimos movimientos.
 
-**Banners:** quincena vencida (desde el layout raíz) · movimientos sin quincena.
+**Banners:** periodo vencido (desde el layout raíz) · movimientos sin periodo.
 
 | Estado vacío | Condición | Texto | Acción | Tono |
 |---|---|---|---|---|
 | Sin cuentas | `accounts` sin ninguna `cash` | — | **Guard**: redirige a `/empezar` | — |
-| Sin quincena abierta | `dashboard.period === null` | "No hay quincena abierta" · "Tus gastos se siguen registrando, pero no cuentan en ningún presupuesto." | Crear quincena (prellenada 1–15 o 16–fin) | pendiente |
+| Sin periodo abierto | `dashboard.period === null` | "No hay periodo abierto" · "Tus gastos se siguen registrando, pero no cuentan en ningún presupuesto." | Crear periodo (prellenada 1–15 o 16–fin) | pendiente |
 | Por asignar en cero, con asignaciones | `unassignedCents === "0"` y algún sobre con `hasBudget: true` | "Todo repartido" · "Cada peso tiene un sobre." | ninguna | **éxito** |
 | Por asignar en cero, sin asignaciones | `unassignedCents === "0"` y ningún sobre con `hasBudget: true` | "Aún no repartes nada" · "Cuando registres un ingreso vas a ver aquí cuánto tienes por asignar." | Registrar ingreso | pendiente |
-| Ningún sobre presupuestado | todos los `categories[].status === "no_budget"` | "Ninguno de tus sobres tiene presupuesto esta quincena" | Repartir → `/sobres` | pendiente |
+| Ningún sobre presupuestado | todos los `categories[].status === "no_budget"` | "Ninguno de tus sobres tiene presupuesto este periodo" | Repartir → `/sobres` | pendiente |
 | Sin gastos | todos los `spentCents === "0"` | "Sin gastos todavía" | ninguna | **éxito** |
 | Por asignar negativo | `unassignedCents < 0` | "Te pasaste por $X" — en rojo, con el monto | Ver sobres en sobregiro | pendiente |
 
@@ -123,7 +123,7 @@ Tab bar: **Inicio · Sobres · Movimientos · Más**. FAB abajo a la derecha →
 
 ---
 
-### `/sobres` — Sobres de la quincena
+### `/sobres` — Sobres del periodo
 
 **Endpoint:** `GET /categories?periodId=<actual>`
 **Escritura:** `PUT /periods/{id}/allocations/{categoryId}` — **nunca** el `POST` de delta (§18 del contrato).
@@ -133,13 +133,13 @@ Cada tarjeta: nombre · Asignado · Gastado · Disponible · estado con su color
 | Estado vacío | Condición | Texto | Acción | Tono |
 |---|---|---|---|---|
 | Cero sobres | `total: 0` | "No tienes sobres" · "Un sobre es una bolsa de dinero con nombre: Comida, Transporte, lo que uses." | Crear sobre · Usar los sugeridos | pendiente |
-| Sin quincena | `period === null` | "Necesitas una quincena abierta para repartir" | Crear quincena | pendiente |
+| Sin periodo | `period === null` | "Necesitas un periodo abierto para repartir" | Crear periodo | pendiente |
 | Sobre `no_budget` | `status === "no_budget"` | "Sin presupuesto" — gris, **sin monto de disponible** | Asignar | pendiente |
 | Sobre `depleted` | `status === "depleted"` | "Agotado" · "$0.00 disponible de $X asignados" | Mover dinero aquí | neutral |
 | Sobre `overspent` | `status === "overspent"` | "Sobregiro de $X" | Cubrir | pendiente |
-| Sobre `overspent` con `spentCents: "0"` | `status === "overspent"` **y** `spentCents === "0"` | "Sobregiro de $X" · "Es un gasto de la quincena pasada, ya cerrada. Se cubre con esta." | Cubrir | pendiente |
+| Sobre `overspent` con `spentCents: "0"` | `status === "overspent"` **y** `spentCents === "0"` | "Sobregiro de $X" · "Es un gasto del periodo pasado, ya cerrado. Se cubre con esta." | Cubrir | pendiente |
 
-> La última fila es el caso del §11.12: lo gastado está en la quincena anterior, lo que hay que cubrir está en esta. La explicación va **en la tarjeta**, no en un tooltip — si hay que buscarla, no sirve.
+> La última fila es el caso del §11.12: lo gastado está en el periodo anterior, lo que hay que cubrir está en esta. La explicación va **en la tarjeta**, no en un tooltip — si hay que buscarla, no sirve.
 
 **Cubrir un sobregiro:** de la misma respuesta, filtra `availableCents > 0`, ordena descendente, ofrece esos sobres como origen → `POST /periods/{id}/allocations/move`.
 
@@ -155,7 +155,7 @@ Cada tarjeta: nombre · Asignado · Gastado · Disponible · estado con su color
 | Sin gastos, con presupuesto | ledger vacío, `hasBudget: true` | "Nada gastado en este sobre" | ninguna | **éxito** |
 | Nunca usado | ledger vacío, `hasBudget: false` | "Este sobre no se ha usado" | Asignar dinero | neutral |
 
-**Archivar:** falla con `409 CATEGORY_HAS_ALLOCATIONS` si tiene presupuesto en un periodo abierto → el mensaje dice "Quita primero su presupuesto de la quincena actual".
+**Archivar:** falla con `409 CATEGORY_HAS_ALLOCATIONS` si tiene presupuesto en un periodo abierto → el mensaje dice "Quita primero su presupuesto del periodo actual".
 
 ---
 
@@ -174,7 +174,7 @@ Cada fila: fecha · descripción · monto · cuentas tocadas (aplicando `formatB
 |---|---|---|---|---|
 | Nada registrado | sin filtros, `data: []` | "Aún no registras nada" · "Captura tu primer gasto y aquí va a quedar el historial." | Capturar gasto | pendiente |
 | Nada con estos filtros | `data: []` con filtro activo | "Ningún movimiento con estos filtros" | Quitar filtros | neutral |
-| Nada en la quincena | filtro = rango del periodo actual | "Sin gastos todavía" | ninguna | **éxito** |
+| Nada en el periodo | filtro = rango del periodo actual | "Sin gastos todavía" | ninguna | **éxito** |
 
 ---
 
@@ -198,16 +198,16 @@ Después de la reversa, se ofrece capturar la versión correcta — con **otra**
 
 **Campos:** monto · sobre (recuerda el último usado) · cuenta de pago (recuerda la última usada) · fecha (default: hoy en la zona de `/me`) · descripción · repartir entre varios sobres (colapsado) · parte prestada (colapsado).
 
-**Antes de guardar:** si `bookedAt` cae en una quincena cerrada, **avisar** (§18). No después.
+**Antes de guardar:** si `bookedAt` cae en un periodo cerrado, **avisar** (§18). No después.
 
 **Después de guardar,** según `budgetImpact.status`:
 
 | `status` | Mensaje |
 |---|---|
 | `in_open_period` | nada, se cierra y vuelve |
-| `compensated` | "Se descontó de {categoryName} en la quincena actual, porque esa quincena ya está cerrada." |
-| `uncompensated` | "El gasto afectó tu saldo pero ninguna quincena." → Crear quincena actual |
-| `no_period` | "Este movimiento no cae en ninguna quincena." → Ver pendientes |
+| `compensated` | "Se descontó de {categoryName} en el periodo actual, porque ese periodo ya está cerrado." |
+| `uncompensated` | "El gasto afectó tu saldo pero ningún periodo." → Crear periodo actual |
+| `no_period` | "Este movimiento no cae en ningún periodo." → Ver pendientes |
 
 **Repartir entre sobres:** usa `splitEvenly` — el residuo va a la primera parte, nunca se descarta.
 
@@ -215,9 +215,22 @@ Después de la reversa, se ofrece capturar la versión correcta — con **otra**
 
 ---
 
-### `/capturar/otro` — Las otras seis intenciones
+### `/capturar/otro` — Las otras cinco intenciones
 
-Selector de seis destinos: Ingreso · Transferencia · Préstamo · Cobro · Dar por perdido · Saldo inicial.
+Selector de cinco destinos: Ingreso · Transferencia · Préstamo · Cobro · Dar por perdido.
+
+⚠️ **Corrección (2026-08-17):** esta pantalla listaba seis destinos, incluyendo "Saldo
+inicial" — pero un saldo inicial no es una intención suelta como un gasto o una
+transferencia: siempre es sobre una cuenta concreta, nace de "¿cuánto hay en **esta**
+cuenta hoy?". Si viviera en este selector, el usuario elegiría la cuenta desde cero;
+en el detalle de cuenta ya está en contexto. Es la misma razón por la que el
+onboarding tampoco lo pone en un formulario aparte (ARCHITECTURE-front.md, tabla de
+decisiones: "Saldos iniciales por cuenta, no en el onboarding" — agregar una cuenta
+seis meses después usa el mismo camino que la primera vez). **`POST
+/transactions/opening-balances` se captura solo desde `/cuentas`**, en el estado
+vacío de una cuenta sin saldo — ver esa sección más abajo. `ARCHITECTURE-front.md` §2
+nunca reservó una ruta para esto bajo `capturar/` (7 carpetas, ninguna es saldo
+inicial); la mención aquí era un residuo, no una decisión.
 
 | Ruta | Endpoint | Vacío |
 |---|---|---|
@@ -245,11 +258,13 @@ Selector de seis destinos: Ingreso · Transferencia · Préstamo · Cobro · Dar
 
 > Las dos primeras se ven idénticas en el saldo y son cosas opuestas. La condición incluye el ledger, no solo el monto.
 
+**Este es el único punto de entrada a `POST /transactions/opening-balances` fuera del onboarding** (corrección del 2026-08-17 — ver `/capturar/otro`): un saldo inicial siempre es sobre una cuenta concreta, así que vive en su detalle, no en un selector de intenciones sueltas.
+
 **Archivar** exige saldo exactamente cero → `409 ACCOUNT_NOT_EMPTY` = "Salda o transfiere el dinero antes de archivar".
 
 ---
 
-### `/quincenas` y `/quincenas/[periodId]/cerrar`
+### `/periodos` y `/periodos/[periodId]/cerrar`
 
 **Endpoints:** `GET /periods` · `POST /periods` · `PATCH` · `DELETE` · `GET /periods/{id}/close-preview` · `POST /periods/{id}/close`
 
@@ -264,18 +279,18 @@ Selector de seis destinos: Ingreso · Transferencia · Préstamo · Cobro · Dar
 | `carry_deficit` | "Se arrastra un déficit de $X" |
 | `none` | "Sin cambios" |
 
-⚠️ **Aviso obligatorio, prominente:** *"Al cerrar, las asignaciones de esta quincena quedan congeladas para siempre. Es el último momento para editarlas."* No hay reapertura en v1 (§15.1).
+⚠️ **Aviso obligatorio, prominente:** *"Al cerrar, las asignaciones de este periodo quedan congeladas para siempre. Es el último momento para editarlas."* No hay reapertura en v1 (§15.1).
 
 Si `canClose === false`, el botón se deshabilita y se muestran los `blockers` traducidos. `NEXT_PERIOD_REQUIRED` ofrece crear el periodo siguiente ahí mismo.
 
-**Borrar un periodo:** si su rango contiene transacciones, avisar antes — esos movimientos van a aparecer como "sin quincena".
+**Borrar un periodo:** si su rango contiene transacciones, avisar antes — esos movimientos van a aparecer como "sin periodo".
 
-**Borrar una asignación que es ajuste de captura tardía** (`note` con el prefijo de §14 de la arquitectura): confirmación **distinta**, con enlace a la transacción que lo originó: *"Este ajuste cubre un gasto de una quincena ya cerrada. Si lo borras, ese gasto queda sin cubrir."*
+**Borrar una asignación que es ajuste de captura tardía** (`note` con el prefijo de §14 de la arquitectura): confirmación **distinta**, con enlace a la transacción que lo originó: *"Este ajuste cubre un gasto de un periodo ya cerrado. Si lo borras, ese gasto queda sin cubrir."*
 
 | Estado vacío | Texto | Acción | Tono |
 |---|---|---|---|
-| Cero periodos | "Aún no creas ninguna quincena" · "Una quincena es el rango donde vive tu presupuesto. Puedes usar 1–15 y 16–fin, o el rango que te acomode." | Crear la primera | pendiente |
-| Nada por cerrar | "Todo al día" · "No tienes quincenas vencidas sin cerrar." | ninguna | **éxito** |
+| Cero periodos | "Aún no creas ningún periodo" · "Un periodo es el rango donde vive tu presupuesto. Puedes usar 1–15 y 16–fin, o el rango que te acomode." | Crear el primero | pendiente |
+| Nada por cerrar | "Todo al día" · "No tienes periodos vencidos sin cerrar." | ninguna | **éxito** |
 
 ---
 
@@ -297,9 +312,9 @@ Cada uno: nombre · monto estimado · sobre · cuenta sugerida · próxima fecha
 
 ### `/mas` — Ajustes
 
-Perfil (`GET`/`PATCH /me`, zona horaria) · Fuentes de ingreso · Cuentas · Quincenas · Recordatorios · Archivadas · Cerrar sesión.
+Perfil (`GET`/`PATCH /me`, zona horaria) · Fuentes de ingreso · Cuentas · Periodos · Recordatorios · Archivadas · Cerrar sesión.
 
-⚠️ Cambiar la zona horaria cambia cómo se resuelve "hoy" y, con ello, en qué quincena caen los gastos capturados. Se avisa antes de guardar.
+⚠️ Cambiar la zona horaria cambia cómo se resuelve "hoy" y, con ello, en qué periodo caen los gastos capturados. Se avisa antes de guardar.
 
 | Estado vacío | Texto | Tono |
 |---|---|---|
@@ -311,7 +326,7 @@ Perfil (`GET`/`PATCH /me`, zona horaria) · Fuentes de ingreso · Cuentas · Qui
 
 | Situación | Cómo se ve |
 |---|---|
-| `404 NO_CURRENT_PERIOD` | Estado vacío con acción "Crear quincena" |
+| `404 NO_CURRENT_PERIOD` | Estado vacío con acción "Crear periodo" |
 | `409 IDEMPOTENCY_IN_FLIGHT` | **Invisible.** Reintento automático a 1s |
 | `unbudgetedTransactions: []` | El banner no se pinta. La ausencia es el estado |
 | Sobre `no_budget` | "Sin presupuesto", gris. Ni error ni cero |

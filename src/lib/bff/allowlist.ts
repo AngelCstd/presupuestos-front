@@ -27,7 +27,9 @@ export const ALLOWLIST: readonly AllowedRoute[] = [
 
   { method: 'GET', pattern: '/categories' },
   { method: 'POST', pattern: '/categories' },
-  { method: 'GET', pattern: '/categories/:id' },
+  // No hay GET /categories/:id en el contrato — solo la lista, PATCH, archive/
+  // unarchive y el ledger. Encontrado y corregido en U17 (2026-08-16, PROGRESS.md):
+  // esta ruta estaba aquí sin base, inventada al construir U9.
   { method: 'PATCH', pattern: '/categories/:id' },
   { method: 'POST', pattern: '/categories/:id/archive' },
   { method: 'POST', pattern: '/categories/:id/unarchive' },

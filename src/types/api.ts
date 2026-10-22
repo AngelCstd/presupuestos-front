@@ -445,6 +445,12 @@ export type QueryKey = readonly unknown[];
  * No es una forma fijada del contrato: nombrada por la sesión de tests porque
  * `invalidationFor` (TASK-front.md §6.1) necesita un tipo de entrada. Documentado
  * en PROGRESS.md junto con las demás inferencias.
+ *
+ * No se le agregan miembros nuevos sin revisar `tests/invalidation.test.ts` primero:
+ * ese archivo tipa su propio fixture como `Record<MutationName, string[]>`, así que
+ * cualquier variante nueva rompe su typecheck aunque el test en sí no la use — un caso
+ * real encontrado en U17 al intentar agregar `updateCategory` (revertido; ver
+ * PROGRESS.md).
  */
 export type MutationName =
   | 'createTransaction'

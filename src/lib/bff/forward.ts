@@ -70,6 +70,13 @@ export async function forwardToApi(
       body: params.body !== undefined ? JSON.stringify(params.body) : undefined,
     });
 
+    // 204 No Content es la forma correcta y esperada de un DELETE (API-CONTRACT.md
+    // §12.1, §12.2) — no tiene cuerpo por diseño, y no es lo mismo que el cuerpo vacío
+    // de un timeout. Nunca se le pide `.json()`.
+    if (upstream.status === 204) {
+      return { status: 204, body: null };
+    }
+
     let body: unknown;
     try {
       body = await upstream.json();

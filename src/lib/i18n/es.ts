@@ -7,7 +7,7 @@
 // glosario de SCREENS-front.md Parte 1 / API-CONTRACT.md §17 que no cabía en las
 // secciones de abajo.
 const entity = {
-  period: 'Quincena',
+  period: 'Periodo',
   allocation: 'Asignación',
   recurringTemplate: 'Recordatorio',
   reversal: 'Corrección',
@@ -41,12 +41,27 @@ const rollover = {
   reset: 'Reinicia',
 } as const;
 
+const periodStatus = {
+  open: 'Abierto',
+  closed: 'Cerrado',
+} as const;
+
+// SCREENS-front.md `/periodos/[periodId]/cerrar`: el texto de cada `action` envuelve un
+// monto que se pinta con <Money>, así que se parte en `before`/`after` en vez de
+// interpolar el número como string (rompería BigInt→string en formatMoney).
+const closeAction = {
+  carry_forward: { before: 'Se arrastra ', after: ' a la siguiente' },
+  release: { before: 'Se liberan ', after: ' para asignar' },
+  carry_deficit: { before: 'Se arrastra un déficit de ', after: '' },
+  none: { before: 'Sin cambios', after: '' },
+} as const;
+
 const budgetImpact = {
   // in_open_period no lleva texto: SCREENS-front.md Parte 1 dice explícitamente
   // "(no se muestra nada)".
-  no_period: 'Este movimiento no cae en ninguna quincena',
-  compensated: 'Ajustado en la quincena actual',
-  uncompensated: 'Sin quincena donde ajustar',
+  no_period: 'Este movimiento no cae en ningún periodo',
+  compensated: 'Ajustado en el periodo actual',
+  uncompensated: 'Sin periodo donde ajustar',
 } as const;
 
 const intent = {
@@ -59,4 +74,26 @@ const intent = {
   reversal: 'Corrección',
 } as const;
 
-export const es = { entity, kind, field, envelopeStatus, rollover, budgetImpact, intent } as const;
+// Etiquetas de navegación (SCREENS-front.md Parte 2, tab bar). No son la traducción de
+// un campo o enum del contrato, pero varias comparten palabra con el glosario (p.ej.
+// "Sobres" contiene "Sobre") — viven aquí igual, para que no haya una segunda copia
+// que se desalinee si el glosario cambia.
+const nav = {
+  inicio: 'Inicio',
+  sobres: 'Sobres',
+  movimientos: 'Movimientos',
+  mas: 'Más',
+} as const;
+
+export const es = {
+  entity,
+  kind,
+  field,
+  envelopeStatus,
+  rollover,
+  periodStatus,
+  closeAction,
+  budgetImpact,
+  intent,
+  nav,
+} as const;

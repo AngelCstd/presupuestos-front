@@ -51,6 +51,12 @@ export async function apiRequest<T>(
       body: params.body !== undefined ? JSON.stringify(params.body) : undefined,
     });
 
+    // 204 No Content (p.ej. DELETE /periods/{id}/allocations/{allocationId},
+    // API-CONTRACT.md §12.2) no tiene cuerpo por diseño — nunca se le pide `.json()`.
+    if (response.status === 204) {
+      return null as T;
+    }
+
     const body: unknown = await response.json();
 
     if (isInFlightError(response.status, body) && attempt <= MAX_RETRIES) {

@@ -1,9 +1,9 @@
 import type { PeriodStatus } from '@/types/api';
 
 /**
- * De varias quincenas vencidas, solo la más antigua se ofrece cerrar — los cierres van
+ * De varios periodos vencidos, solo el más antiguo se ofrece cerrar — los cierres van
  * en orden cronológico y la API rechaza el desordenado (API-CONTRACT.md §15.2).
- * `endsOn` es inclusivo: una quincena vencida es una cuyo `endsOn` es ANTERIOR a hoy,
+ * `endsOn` es inclusivo: un periodo vencido es uno cuyo `endsOn` es ANTERIOR a hoy,
  * no igual (API-CONTRACT.md §12.1).
  */
 export function selectClosablePeriod(

@@ -30,7 +30,7 @@ describe('es — cobertura de traducción', () => {
 describe('una sola capa de traducción — el glosario solo vive en lib/i18n/es.ts', () => {
   const GLOSSARY_TERMS = [
     'Sobre',
-    'Quincena',
+    'Periodo',
     'Por asignar',
     'Disponible',
     'Te deben',

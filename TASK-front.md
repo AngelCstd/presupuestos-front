@@ -124,20 +124,24 @@ U0 setup
                                                              ↓
                                       U14 layouts, tab bar, FAB, banners, guard
                                                              ↓
+                                      U14b /login (email + contraseña)
+                                                             ↓
         ┌──────────────┬──────────────┬─────────────┬────────┴──────┬──────────────┐
         ↓              ↓              ↓             ↓               ↓              ↓
    U15 onboarding  U16 inicio    U17 sobres   U18 capturar     U19 movimientos  U20 cuentas
                                                     ↓
-                                             U21 quincenas
+                                             U21 periodos
                                                     ↓
                                              U22 recordatorios
                                                     ↓
                                              U23 más / ajustes
 ```
 
-**Por qué U18 (capturar) va antes que U21 (quincenas):** capturar es el caso de uso central y ejercita el borrador, la llave de idempotencia y `budgetImpact` completos. Si algo de esa cadena está mal, quiero que reviente ahí y no doce unidades después.
+**Por qué U18 (capturar) va antes que U21 (periodos):** capturar es el caso de uso central y ejercita el borrador, la llave de idempotencia y `budgetImpact` completos. Si algo de esa cadena está mal, quiero que reviente ahí y no doce unidades después.
 
 **U15 a U20 son independientes entre sí** y pueden hacerse en cualquier orden dentro del nivel. U21 depende de U17 porque el cierre reusa la tarjeta de sobre.
+
+**U14b va antes que U15–U23, no en paralelo con ellas:** todas las pantallas siguientes necesitan una sesión real para poder probarse — sin `/login`, no hay manera de llegar a ninguna con un usuario autenticado.
 
 ---
 
@@ -244,7 +248,7 @@ Cada unidad: qué entrega, de qué depende, y su criterio de aceptación en dado
 
 - **Dado** cualquier `code` del §7.2, **cuando** se llama `errorMessageFor`, **entonces** devuelve un texto en español que no es el fallback.
 - **Dado** `"CODIGO_QUE_NO_EXISTE"`, **entonces** devuelve el fallback genérico **sin lanzar**.
-- **Dado** todo el `src/`, **cuando** se busca cualquier término del glosario escrito a mano en un componente (`"Sobre"`, `"Quincena"`, `"Por asignar"`…), **entonces** solo aparece en `lib/i18n/es.ts`.
+- **Dado** todo el `src/`, **cuando** se busca cualquier término del glosario escrito a mano en un componente (`"Sobre"`, `"Periodo"`, `"Por asignar"`…), **entonces** solo aparece en `lib/i18n/es.ts`.
 - **Dado** el `message` de una respuesta de error, **entonces** nunca se pinta en la UI. Solo se loguea.
 
 ---
@@ -365,15 +369,32 @@ Lo que no se puede testear es la llamada real, no la lógica alrededor. Un mock 
 
 **Depende de:** U11, U12, U13. **Tests:** `overdue-periods.test.ts`.
 
-**Entrega:** `app/layout.tsx` (providers, `TimezoneProvider`, banner de quincena vencida), `app/(app)/layout.tsx` (tab bar de 4, FAB, guard de onboarding).
+**Entrega:** `app/layout.tsx` (providers, `TimezoneProvider`, banner de periodo vencido), `app/(app)/layout.tsx` (tab bar de 4, FAB, guard de onboarding).
 
 - **Dado** que `GET /accounts` no trae ninguna cuenta `cash`, **cuando** se entra a cualquier ruta de `(app)`, **entonces** redirige a `/empezar` (§15.3 del contrato: es la señal, no hay flag).
-- **Dado** que existe un periodo con `status: "open"` y `endsOn` anterior a hoy en la zona del usuario, **entonces** el banner de quincena vencida aparece **en todas las pantallas**, incluidas las de captura.
-- **Dado** varias quincenas vencidas, **entonces** el banner ofrece cerrar **solo la más antigua**. Los cierres van en orden y la API rechaza el desordenado (§15.2).
-- **Dado** el banner de quincena vencida, **entonces** **no bloquea nada**: ni capturar, ni asignar, ni navegar.
+- **Dado** que existe un periodo con `status: "open"` y `endsOn` anterior a hoy en la zona del usuario, **entonces** el banner de periodo vencido aparece **en todas las pantallas**, incluidas las de captura.
+- **Dado** varios periodos vencidos, **entonces** el banner ofrece cerrar **solo el más antiguo**. Los cierres van en orden y la API rechaza el desordenado (§15.2).
+- **Dado** el banner de periodo vencido, **entonces** **no bloquea nada**: ni capturar, ni asignar, ni navegar.
 - **Dado** `unbudgetedTransactions` con elementos, **entonces** su banner aparece en Inicio y Movimientos, **y en ninguna otra pantalla**.
 - **Dado** `unbudgetedTransactions: []`, **entonces** el banner no se pinta. No hay estado vacío para eso.
 - **Dado** el FAB, **entonces** navega a `/capturar/gasto` directo, sin selector intermedio.
+
+---
+
+### U14b — `/login`
+
+**Depende de:** U8b, U13. **Sin tests propios** — formulario simple sin lógica de dominio; el envío real a Supabase es I/O, como U8b.
+
+⚠️ **Agregada en sesión de implementación (2026-08-16) — hueco del documento original, no una decisión tomada sobre la marcha.** Ningún unit de este documento cubría `/login`, a pesar de que ARCHITECTURE-front.md §2 la lista en el árbol de rutas y de que el guard de U8a/U8b redirige ahí. El método de autenticación tampoco estaba decidido en ningún archivo fuente. Decisión del humano, tomada explícitamente para cerrar el hueco:
+
+**Método: `supabase.auth.signInWithPassword` (correo + contraseña).** Los tres usuarios reales ya existen creados así (§8.4 usó `grant_type=password`), no van a rotar, y ni magic link ni OAuth se justifican a esta escala — magic link además obliga a manejar un callback y depender del correo en cada entrada, fricción pura para una app de uso diario.
+
+**Entrega:** `app/(auth)/login/page.tsx`.
+
+- **Dado** correo y contraseña válidos, **cuando** se envía el formulario, **entonces** `supabase.auth.signInWithPassword({ email, password })`, y si tiene éxito, redirige a `next` (o `/` si no hay `next`).
+- **Dado** credenciales inválidas, **entonces** se muestra un mensaje en español sin bloquear el formulario para reintentar.
+- **Dado** que la URL trae `?next=/capturar/gasto`, **entonces** el login exitoso redirige ahí, no a `/`.
+- **Fuera de alcance, a propósito:** registro, recuperación de contraseña, verificación de correo — se administran desde el dashboard de Supabase, no desde la app.
 
 ---
 
@@ -384,7 +405,7 @@ Lo que no se puede testear es la llamada real, no la lógica alrededor. Un mock 
 - **Dado** un usuario sin cuentas `cash`, **cuando** entra a la app, **entonces** llega a `/empezar`.
 - **Dado** el formulario, **entonces** los 7 sobres sugeridos y "Sueldo" aparecen con checkbox **preseleccionado** (§10.3 del contrato).
 - **Dado** que se confirma, **entonces** las llamadas salen en el orden de §16.1 del contrato, y los saldos iniciales van en **una sola** llamada a `opening-balances` con `Idempotency-Key`.
-- **Dado** que se completa, **entonces** **no** crea la primera quincena ni asigna presupuesto. Eso pasa en las pantallas normales.
+- **Dado** que se completa, **entonces** **no** crea el primer periodo ni asigna presupuesto. Eso pasa en las pantallas normales.
 
 ---
 
@@ -393,7 +414,7 @@ Lo que no se puede testear es la llamada real, no la lógica alrededor. Un mock 
 **Depende de:** U14.
 
 - **Dado** cualquier carga, **entonces** usa **una sola** llamada a `GET /insights/dashboard`.
-- **Dado** `period === null`, **entonces** se muestra "No hay quincena abierta" con acción de crearla. **No se pinta como error** — `NO_CURRENT_PERIOD` es un `404` en el contrato y una acción pendiente para el usuario.
+- **Dado** `period === null`, **entonces** se muestra "No hay periodo abierto" con acción de crearlo. **No se pinta como error** — `NO_CURRENT_PERIOD` es un `404` en el contrato y una acción pendiente para el usuario.
 - **Dado** `unassignedCents === "0"` **y** algún sobre con `hasBudget: true`, **entonces** "Todo repartido", tono **éxito**.
 - **Dado** `unassignedCents === "0"` **y** ningún sobre con `hasBudget: true`, **entonces** "Aún no repartes nada", tono pendiente. **La condición es el conteo de `hasBudget`, nunca el monto.**
 - **Dado** `unassignedCents` negativo, **entonces** se pinta en el color de sobregiro con el texto "Te pasaste por $X".
@@ -406,20 +427,22 @@ Lo que no se puede testear es la llamada real, no la lógica alrededor. Un mock 
 
 - **Dado** que el usuario fija un monto en un sobre, **entonces** se llama `PUT /periods/{id}/allocations/{categoryId}` con `targetAssignedCents`. **Nunca el `POST` de delta.**
 - **Dado** `status: "no_budget"`, **entonces** se pinta "Sin presupuesto" en gris y **sin monto de disponible**, visiblemente distinto de `depleted`.
-- **Dado** `status: "overspent"` con `spentCents: "0"`, **entonces** la tarjeta incluye "Es un gasto de la quincena pasada, ya cerrada. Se cubre con esta." **En la tarjeta, no en un tooltip.**
+- **Dado** `status: "overspent"` con `spentCents: "0"`, **entonces** la tarjeta incluye "Es un gasto del periodo pasado, ya cerrado. Se cubre con esta." **En la tarjeta, no en un tooltip.**
 - **Dado** un sobre en sobregiro, **cuando** se ofrece cubrirlo, **entonces** los orígenes son los sobres del mismo periodo con `availableCents > 0`, ordenados descendente, vía `POST /periods/{id}/allocations/move`.
-- **Dado** `409 CATEGORY_HAS_ALLOCATIONS` al archivar, **entonces** el mensaje dice que quite primero el presupuesto de la quincena actual.
+- **Dado** `409 CATEGORY_HAS_ALLOCATIONS` al archivar, **entonces** el mensaje dice que quite primero el presupuesto del periodo actual.
 
 ---
 
 ### U18 — `/capturar/*`
 
-**Depende de:** U14. **Es la unidad crítica.** **Tests:** `expense-form.test.ts`, `idempotency.test.ts`, `unauthorized-recovery.test.ts`.
+**Depende de:** U14. **Es la unidad crítica.** **Tests:** `idempotency.test.ts`, `unauthorized-recovery.test.ts`.
+
+⚠️ **Corrección (2026-08-17):** esta sección mencionaba también `expense-form.test.ts`, que nunca existió — no está en §5.2, no está en `tests/EXPECTED.json`, no está en el repositorio. Un test de formulario de verdad exigiría renderizarlo, y choca directo con "cero tests de render, snapshot o e2e" (§2.2, §7). Era un residuo del documento, no una omisión real como la de `api-client.test.ts` — se quita la mención en vez de dejarla para que alguien la "resuelva" mal después. Si al construir U18 aparece lógica extraíble a función pura (p.ej. la detección de fecha en periodo cerrado), se saca a su propio archivo y se anota en `PROGRESS.md` como pendiente para una sesión de tests — no la escribe el implementador.
 
 - **Dado** que se abre el formulario, **entonces** la fecha por default es `todayInTimeZone(timezone de /me)`, no la del navegador.
-- **Dado** que la fecha capturada cae en una quincena cerrada, **entonces** se avisa **antes** de guardar. No después (§18 del contrato).
+- **Dado** que la fecha capturada cae en un periodo cerrado, **entonces** se avisa **antes** de guardar. No después (§18 del contrato).
 - **Dado** `budgetImpact.status === "compensated"`, **entonces** se muestra qué sobre se ajustó y por cuánto, con el nombre que viene en `compensations[]`.
-- **Dado** `"uncompensated"`, **entonces** se avisa y se ofrece crear la quincena actual.
+- **Dado** `"uncompensated"`, **entonces** se avisa y se ofrece crear el periodo actual.
 - **Dado** `"no_period"`, **entonces** se avisa que quedará en pendientes por asignar.
 - **Dado** `"in_open_period"`, **entonces** no se muestra ningún mensaje de impacto.
 - **Dado** un reparto entre N sobres, **entonces** el desglose se muestra **antes de guardar** con los montos ya calculados por `splitEvenly`, editables.
@@ -453,15 +476,15 @@ Lo que no se puede testear es la llamada real, no la lógica alrededor. Un mock 
 
 ---
 
-### U21 — `/quincenas` y el cierre
+### U21 — `/periodos` y el cierre
 
 **Depende de:** U17.
 
-- **Dado** varias quincenas vencidas sin cerrar, **entonces** se listan en orden cronológico y **solo la más antigua ofrece "Cerrar"**.
+- **Dado** varios periodos vencidos sin cerrar, **entonces** se listan en orden cronológico y **solo el más antiguo ofrece "Cerrar"**.
 - **Dado** la pantalla de cierre, **entonces** se alimenta de `GET /periods/{id}/close-preview`, que no escribe nada.
 - **Dado** `canClose === false`, **entonces** el botón se deshabilita y se muestran los `blockers` traducidos.
 - **Dado** `NEXT_PERIOD_REQUIRED`, **entonces** se ofrece crear el periodo siguiente ahí mismo y reintentar.
-- **Dado** la pantalla de cierre, **entonces** incluye, visible y prominente: "Al cerrar, las asignaciones de esta quincena quedan congeladas para siempre." No hay reapertura en v1 (§15.1).
+- **Dado** la pantalla de cierre, **entonces** incluye, visible y prominente: "Al cerrar, las asignaciones de este periodo quedan congeladas para siempre." No hay reapertura en v1 (§15.1).
 - **Dado** que se va a borrar un periodo cuyo rango contiene transacciones, **entonces** se avisa antes.
 - **Dado** que se va a borrar una asignación cuya `note` pasa `isLateCaptureNote`, **entonces** la confirmación es **distinta** de la de una asignación normal, y enlaza a la transacción de origen cuando el id se pudo extraer.
 - **Dado** el cierre, **entonces** **no** es optimista: se espera la respuesta. Es irreversible.
@@ -483,7 +506,7 @@ Lo que no se puede testear es la llamada real, no la lógica alrededor. Un mock 
 
 **Depende de:** U22.
 
-- **Dado** que se cambia la zona horaria, **entonces** se avisa antes de guardar que eso cambia en qué quincena caen los gastos capturados.
+- **Dado** que se cambia la zona horaria, **entonces** se avisa antes de guardar que eso cambia en qué periodo caen los gastos capturados.
 - **Dado** `400 INVALID_TIMEZONE`, **entonces** se muestra el mensaje del catálogo.
 
 ---
@@ -541,6 +564,24 @@ parseAmountInput(text: string): string | null
 // lib/domain/dates.ts
 todayInTimeZone(timeZone: string, now?: Date): string
 formatInstant(iso: string, timeZone: string): string
+// Fijada en U18 (2026-08-17): ya estaba nombrada en el árbol original de
+// ARCHITECTURE-front.md §8 pero nunca se fijó aquí, así que la sesión de tests no le
+// escribió test. Extraída al construir /capturar/gasto (avisar antes de guardar si la
+// fecha cae en un periodo cerrado). Sin test propio todavía — pendiente para una
+// sesión de tests, no la escribe el implementador.
+isDateInClosedPeriod(
+  date: string,
+  periods: readonly { startsOn: string; endsOn: string; status: PeriodStatus }[],
+): boolean
+
+// lib/domain/accounts.ts
+// NUEVO — fijada tras un bug real (2026-08-17, reportado y confirmado por el humano
+// con SQL): GET /insights/account-balances y GET /insights/dashboard devuelven cash,
+// credit, receivable, category e income_source mezclados en el mismo arreglo
+// (API-CONTRACT.md §14) — filtrar a cuentas reales es responsabilidad del frontend, y
+// no se estaba haciendo: el bloque "Cuentas" de Inicio pintaba sobres. Sin test propio
+// todavía — pendiente para una sesión de tests, no la escribe el implementador.
+isRealAccountKind(kind: AccountKind): kind is RealAccountKind
 
 // lib/domain/envelopes.ts
 deriveEnvelopeStatus(p: {
@@ -615,7 +656,7 @@ Las de §2 de `ARCHITECTURE-front.md`, literales. `/capturar/gasto` no es `/capt
 
 ### 6.4 Nombres en español de la UI
 
-Los de la Parte 1 de `SCREENS-front.md`. "Sobre", no "Categoría". "Quincena", no "Periodo". "Por asignar", no "Disponible".
+Los de la Parte 1 de `SCREENS-front.md`. "Sobre", no "Categoría". "Periodo", no "Quincena" (cambio de glosario, 2026-08-24 — ver nota en `SCREENS-front.md` Parte 1). "Por asignar", no "Disponible".
 
 ---
 
@@ -634,7 +675,7 @@ Los de la Parte 1 de `SCREENS-front.md`. "Sobre", no "Categoría". "Quincena", n
 | **Inventar un endpoint o un campo** | Si no está en el contrato, no existe. Detente y pregunta |
 | **Proponer cambios al backend** | Está cerrado y desplegado. Anótalo en "Huecos detectados" y pregunta |
 | **Usar `Number` para montos** | Enteros de 64 bits: `Number` los corrompe arriba de 2^53, en silencio (§4.1 del contrato) |
-| **Usar `toISOString().slice(0,10)` para `bookedAt`** | Es UTC. A las 23:00 en CDMX manda el día siguiente y el gasto cae en la quincena equivocada |
+| **Usar `toISOString().slice(0,10)` para `bookedAt`** | Es UTC. A las 23:00 en CDMX manda el día siguiente y el gasto cae en el periodo equivocado |
 | **Leer la zona horaria del navegador** | Sale de `GET /me`. El contrato lo dice explícitamente |
 | **Generar una llave de idempotencia por intento HTTP** | Duplica transacciones. Una llave por **intención**, reusada en todos los reintentos hasta `2xx` |
 | **Guardar borradores en `localStorage`** | Un borrador viejo trae una llave de idempotencia inútil |
@@ -682,13 +723,13 @@ Ningún agente puede hacer estas. **Las que están antes de U8b bloquean el arra
    |---|---|---|
    | 6.1 | Iniciar sesión y abrir Inicio | Carga sin `401`; los saldos coinciden con `GET /insights/dashboard` en `curl` |
    | 6.2 | Capturar un gasto de hoy | `201`; el sobre baja el monto; sin mensaje de impacto |
-   | 6.3 | Capturar un gasto con fecha de una quincena **cerrada** | Avisa **antes** de guardar; al guardar muestra "se descontó de {sobre} en la quincena actual" |
+   | 6.3 | Capturar un gasto con fecha de un periodo **cerrado** | Avisa **antes** de guardar; al guardar muestra "se descontó de {sobre} en el periodo actual" |
    | 6.4 | Apagar la red, guardar un gasto, prenderla, reintentar | Se crea **una sola** transacción. Si aparecen dos, la llave de idempotencia está mal y **el task no está terminado** |
    | 6.5 | Corregir esa transacción | Ambas visibles; la original tachada como "Corregida" |
    | 6.6 | Fijar un monto en un sobre desde dos pestañas a la vez | Queda en el valor fijado, no en la suma |
    | 6.7 | Abrir `/capturar/gasto`, llenar el formulario, invalidar la sesión, reintentar | Tras el re-login, los valores y la llave siguen ahí |
-   | 6.8 | Con una quincena vencida sin cerrar | El banner aparece en las 4 tabs y ofrece cerrar **solo la más antigua** |
-   | 6.9 | Cerrar esa quincena | `close-preview` coincide con el resultado; los rollovers llegan con `source: "rollover"` |
+   | 6.8 | Con un periodo vencido sin cerrar | El banner aparece en las 4 tabs y ofrece cerrar **solo el más antiguo** |
+   | 6.9 | Cerrar ese periodo | `close-preview` coincide con el resultado; los rollovers llegan con `source: "rollover"` |
 
    **6.4 y 6.7 son los que importan.** Son los dos requisitos del §18 que ninguna suite de lógica pura puede probar de verdad, porque dependen de la red y del ciclo real de sesión.
 
@@ -718,7 +759,7 @@ src/
 └─ types/api.ts
 ```
 
-**Organizado por dominio, no por tipo de archivo.** El árbol dice qué hace el producto. `components/ui` guarda solo piezas sin conocimiento de dominio: si un componente ahí menciona "sobre" o "quincena", está en el lugar equivocado.
+**Organizado por dominio, no por tipo de archivo.** El árbol dice qué hace el producto. `components/ui` guarda solo piezas sin conocimiento de dominio: si un componente ahí menciona "sobre" o "periodo", está en el lugar equivocado.
 
 ---
 
