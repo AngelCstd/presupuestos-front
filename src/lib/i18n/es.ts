@@ -27,6 +27,8 @@ const field = {
   availableCents: 'Disponible',
   unassignedCents: 'Por asignar',
   balanceCents: 'Saldo',
+  bookedAt: 'Fecha',
+  description: 'Descripción',
 } as const;
 
 const envelopeStatus = {
@@ -85,6 +87,44 @@ const nav = {
   mas: 'Más',
 } as const;
 
+const inicio = {
+  noPeriodTitle: 'No hay periodo abierto',
+  noPeriodDescription: 'Tus gastos se siguen registrando, pero no cuentan en ningún presupuesto.',
+  createPeriod: 'Crear periodo',
+  periodEndsToday: 'Termina hoy',
+  periodEnded: 'Periodo terminado',
+  daysRemainingSuffix: ' restantes',
+  allAssignedTitle: 'Todo repartido',
+  allAssignedDescription: 'Cada peso tiene un sobre.',
+  nothingAssignedTitle: 'Aún no repartes nada',
+  nothingAssignedDescription: 'Cuando registres un ingreso vas a ver aquí cuánto tienes por asignar.',
+  registerIncome: 'Registrar ingreso',
+  readyToAssign: 'Listo para repartir en tus sobres.',
+  assignAction: 'Repartir',
+  negativeRealMoneyTitle: 'Sin dinero libre para repartir',
+  negativeRealMoneySubtitle: 'Tus tarjetas superan a tu efectivo',
+  negativeRealMoneyDescription:
+    'Todo tu efectivo actual está respaldando tus consumos en tarjeta. Para tener dinero libre que puedas repartir en sobres, necesitas registrar un ingreso o cobrar un préstamo pendiente.',
+  viewAccounts: 'Ver cuentas y tarjetas',
+  overspentHeroTitle: 'Sobres por ajustar',
+  reviewEnvelopes: 'Revisar sobres',
+  coverOverspend: 'Cubrir',
+  periodSpentHeader: 'Gastado este periodo',
+  ofTotal: ' de ',
+  envelopesTitle: 'Sobres del periodo',
+  noEnvelopesBudgeted: 'Ninguno de tus sobres tiene presupuesto este periodo',
+  noExpensesYet: 'Sin gastos todavía',
+  unbudgetedSuffix: ' movimientos no caen en ningún periodo.',
+  viewPending: 'Ver',
+  accountsTitle: 'Cuentas y saldos',
+  cashTitle: 'Efectivo y bancos',
+  creditTitle: 'Tarjetas de crédito',
+  receivableTitle: 'Te deben',
+  noBudgetCountSuffix: ' sobres sin presupuesto este periodo',
+  overspentCountSuffix: ' sobres gastaron más de lo asignado.',
+  overspentSingleSuffix: ' sobre gastó más de lo asignado.',
+} as const;
+
 export const es = {
   entity,
   kind,
@@ -96,4 +136,5 @@ export const es = {
   budgetImpact,
   intent,
   nav,
+  inicio,
 } as const;
