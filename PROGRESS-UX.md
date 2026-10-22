@@ -28,10 +28,13 @@
   * Se extrajo la función pura en `src/lib/domain/accounts.ts` con test dedicado (`tests/real-money.test.ts`).
   * Suma exclusivamente cuentas `cash` y `credit` (donde la deuda resta). Ignora completamente `receivable`, `category` e `income_source`.
 * **Tope de "Por asignar" en $0.00 y jerarquía de Tarjeta Héroe:**
-  * Si `dinero real < 0`: Muestra *"Sin dinero libre para repartir"*, indicando el exceso de deuda de tarjeta sobre el efectivo con explicación factual y enlace a `/cuentas`. "Por asignar" queda clampeado en `$0.00`.
-  * Si hay sobregiros en sobres pero dinero real positivo: Muestra *"Sobres por ajustar"* con el total del déficit a cubrir y botón directo `[Revisar sobres]`. "Por asignar" queda en `$0.00`.
-  * Si `unassignedCents > 0`: Muestra el monto libre para repartir con acción `[Repartir]`.
-  * Si `unassignedCents === 0`: Se preserva la distinción entre *"Todo repartido"* (si hay presupuestos asignados) y *"Aún no repartes nada"* (si aún no se asigna nada).
+  * La tarjeta héroe se dedica exclusivamente a la salud de los sobres del periodo:
+    1. Si hay sobres con sobregiro: Muestra *"Sobres por ajustar"* con el total del déficit a cubrir y botón directo `[Revisar sobres]`. "Por asignar" queda en `$0.00`.
+    2. Si `unassignedCents > 0`: Muestra el monto libre para repartir con acción `[Repartir]`.
+    3. Si `unassignedCents === 0`: Se preserva la distinción entre *"Todo repartido"* (si hay presupuestos asignados) y *"Aún no repartes nada"* (si aún no se asigna nada).
+  * **Dinero real negativo en bloque de cuentas:** El caso donde la deuda de tarjeta supera al efectivo (`dinero real < 0`) no bloquea la tarjeta héroe. Se presenta de forma factual y serena dentro del bloque de cuentas (*"Tus tarjetas superan a tu efectivo"*) explicando que el efectivo actual respalda la tarjeta.
+* **Tokens de diseño formales completados:**
+  * Escala tipográfica (`fontSize`: `2xs` a `3xl`), radios de curvatura (`borderRadius`: `xs` a `full`), elevaciones/sombras (`boxShadow`: `sm`, `md`, `lg`) y malla de espaciado (`spacing`: `0.5` a `20`) formalizados en variables CSS en `globals.css` y cableados en `tailwind.config.ts`.
 * **Bloque "Últimos movimientos" en Inicio (Resuelto solo):**
   * La especificación original hablaba de cuatro bloques apilados, pero la auditoría del código demostró que "Últimos movimientos" nunca estuvo montado en `InicioView.tsx`. Por ende, no hubo que remover nada; la pantalla conserva sus 3 bloques estructurales (`Por asignar`, `Sobres`, `Cuentas`).
 * **Barra de resumen del periodo y días restantes:**
@@ -92,8 +95,8 @@
   * `no_budget`: Borde punteado/discreto y sin barra de progreso.
   * `overspent`: Borde reforzado de alerta (`border-state-overspent/50`), fondo sutil y botón de acción directa *"Cubrir"*.
   * `depleted`: Barra llena en ocre templado con disponible en `$0.00`.
-* **Corrección de concordancia en captura tardía:**
-  * Se reemplazó el texto viejo *"Es un gasto del periodo pasado, ya cerrado. Se cubre con esta"* por *"Gasto registrado con fecha de un periodo ya cerrado. Se cubre con el presupuesto de este periodo."*
+* **Resolución de la aparente contradicción en captura tardía:**
+  * Ante la confusión de ver *"Sobregiro de $X"* junto a *"Gastado: $0"*, se calibró el texto explicativo para resolver directamente la aparente contradicción: *"Este sobregiro no es por compras de este periodo (llevas $0 gastados): proviene de un gasto que registraste con fecha de un periodo anterior ya cerrado. Para normalizar el sobre, puedes asignarle presupuesto o cubrirlo desde otro sobre."*
 * **Soporte de variante compacta:**
   * Se agregó la prop `compact?: boolean` para permitir reutilización en contextos de solo lectura o resumen sin renderizar el formulario de edición de presupuesto.
 
