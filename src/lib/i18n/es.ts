@@ -90,7 +90,7 @@ const nav = {
 const envelopeCard = {
   noBudgetPrompt: 'Sin presupuesto asignado este periodo',
   lateCaptureNotice:
-    'Gasto registrado con fecha de un periodo ya cerrado. Se cubre con el presupuesto de este periodo.',
+    'Este sobregiro no es por compras de este periodo (llevas $0 gastados): proviene de un gasto que registraste con fecha de un periodo anterior ya cerrado. Para normalizar el sobre, puedes asignarle presupuesto o cubrirlo desde otro sobre.',
   saveAction: 'Guardar',
   coverAction: 'Cubrir',
   spentOf: ' gastados de ',

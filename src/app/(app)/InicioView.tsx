@@ -88,8 +88,6 @@ function PeriodHeader({ dashboard }: { dashboard: DashboardResponse }) {
 }
 
 function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
-  const realMoney = calculateRealMoney(dashboard.accounts);
-
   const overspentCategories = dashboard.categories.filter((cat) => cat.status === 'overspent');
   const overspentDeficit = overspentCategories.reduce((sum, cat) => {
     const avail = BigInt(cat.availableCents);
@@ -99,38 +97,7 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
   const unassigned = BigInt(dashboard.unassignedCents);
   const hasAnyBudgeted = dashboard.categories.some((category) => category.hasBudget);
 
-  // Situación 1: Dinero real negativo (Tarjetas superan efectivo)
-  if (realMoney < 0n) {
-    const cardExcess = -realMoney;
-    return (
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-background/60 p-5">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium text-muted uppercase tracking-wider">
-            {es.inicio.negativeRealMoneyTitle}
-          </p>
-          <p className="text-3xl font-semibold text-foreground">
-            <Money cents={cardExcess.toString()} />
-          </p>
-          <p className="text-xs text-muted">{es.inicio.negativeRealMoneySubtitle}</p>
-        </div>
-
-        <p className="text-xs text-foreground/80 leading-relaxed">
-          {es.inicio.negativeRealMoneyDescription}
-        </p>
-
-        <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
-          <span className="text-muted">
-            {es.field.unassignedCents}: <Money cents="0" />
-          </span>
-          <Link href="/cuentas" className="font-medium text-primary underline">
-            {es.inicio.viewAccounts}
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Situacion 2: Categorias en sobregiro con dinero real positivo
+  // Situación 1: Categorías con sobregiro
   if (overspentCategories.length > 0) {
     const count = overspentCategories.length;
     const overspentLabel =
@@ -162,7 +129,7 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
     );
   }
 
-  // Situación 3: Dinero libre para repartir
+  // Situación 2: Dinero libre para repartir
   if (unassigned > 0n) {
     return (
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-background/60 p-5">
@@ -185,7 +152,7 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
     );
   }
 
-  // Situación 4 y 5: unassigned === 0 (Todo repartido vs. Aún no repartes nada)
+  // Situación 3 y 4: unassigned === 0 (Todo repartido vs. Aún no repartes nada)
   return hasAnyBudgeted ? (
     <EmptyState
       tone="exito"
@@ -352,6 +319,7 @@ function AccountsBlock({ dashboard }: { dashboard: DashboardResponse }) {
 
   const cashTotal = cashAccounts.reduce((sum, a) => sum + BigInt(a.balanceCents), 0n);
   const creditTotal = creditAccounts.reduce((sum, a) => sum + BigInt(a.balanceCents), 0n);
+  const realMoney = calculateRealMoney(dashboard.accounts);
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-background/30 p-4">
@@ -389,6 +357,13 @@ function AccountsBlock({ dashboard }: { dashboard: DashboardResponse }) {
           </div>
         ) : null}
       </div>
+
+      {realMoney < 0n ? (
+        <div className="rounded border border-border/80 bg-background/60 p-2.5 text-xs text-muted">
+          <p className="font-medium text-foreground">{es.inicio.negativeRealMoneySubtitle}</p>
+          <p className="mt-0.5 leading-relaxed">{es.inicio.negativeRealMoneyDescription}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -72,6 +72,53 @@
   --state-available: #3b6e91;
   --state-depleted: #8a5f35;
   --state-overspent: #b91c1c;
+
+  /*
+   * Escala tipográfica formal (TASK tokens)
+   */
+  --font-size-2xs: 0.6875rem; /* 11px */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+
+  /*
+   * Radios de borde con curvatura generosa según dirección visual
+   */
+  --radius-xs: 0.25rem;       /* 4px */
+  --radius-sm: 0.375rem;      /* 6px */
+  --radius-md: 0.5rem;        /* 8px */
+  --radius-lg: 0.75rem;       /* 12px */
+  --radius-xl: 1rem;          /* 16px */
+  --radius-full: 9999px;
+
+  /*
+   * Elevaciones / sombras suaves calibradas sobre fondo crema
+   */
+  --shadow-sm: 0 1px 2px 0 rgba(38, 36, 32, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(38, 36, 32, 0.07), 0 2px 4px -2px rgba(38, 36, 32, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(38, 36, 32, 0.08), 0 4px 6px -4px rgba(38, 36, 32, 0.04);
+
+  /*
+   * Escala de espaciado formal (malla base de 4px / 8px)
+   */
+  --spacing-0-5: 0.125rem; /* 2px */
+  --spacing-1: 0.25rem;     /* 4px */
+  --spacing-1-5: 0.375rem; /* 6px */
+  --spacing-2: 0.5rem;      /* 8px */
+  --spacing-2-5: 0.625rem; /* 10px */
+  --spacing-3: 0.75rem;     /* 12px */
+  --spacing-4: 1rem;        /* 16px */
+  --spacing-5: 1.25rem;     /* 20px */
+  --spacing-6: 1.5rem;      /* 24px */
+  --spacing-8: 2rem;        /* 32px */
+  --spacing-10: 2.5rem;     /* 40px */
+  --spacing-12: 3rem;       /* 48px */
+  --spacing-16: 4rem;       /* 64px */
+  --spacing-20: 5rem;       /* 80px */
 }
 
 body {

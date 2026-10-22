@@ -249,7 +249,7 @@
 
 Declarados en `src/app/globals.css` y mapeados en `tailwind.config.ts`:
 
-### Tokens con valor concreto:
+### Tokens con valor formal y cableados en Tailwind:
 * `--font-sans`: `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`
 * `--color-background`: `#faf7f0` (crema cálido)
 * `--color-foreground`: `#262420` (negro suave)
@@ -266,12 +266,10 @@ Declarados en `src/app/globals.css` y mapeados en `tailwind.config.ts`:
 * `--state-available`: `#3b6e91` (azul apagado)
 * `--state-depleted`: `#8a5f35` (ocre templado)
 * `--state-overspent`: `#b91c1c` (rojo alerta)
-
-### Tokens pendientes de valor o escala formal:
-* Escala formal de tipografía (`text-xs` a `text-3xl` usa defaults de Tailwind sin tokens dedicados).
-* Radios de borde (`rounded-md`, `rounded-full` usan defaults de Tailwind).
-* Sombras y elevaciones (`shadow-*` sin tokens personalizados).
-* Espaciado y breakpoints (usan defaults de Tailwind).
+* **Tipografía (`fontSize`):** `--font-size-2xs` (11px), `--font-size-xs` (12px), `--font-size-sm` (14px), `--font-size-base` (16px), `--font-size-lg` (18px), `--font-size-xl` (20px), `--font-size-2xl` (24px), `--font-size-3xl` (30px)
+* **Radios (`borderRadius`):** `--radius-xs` (4px), `--radius-sm` (6px), `--radius-md` (8px), `--radius-lg` (12px), `--radius-xl` (16px), `--radius-full` (9999px)
+* **Sombras (`boxShadow`):** `--shadow-sm`, `--shadow-md`, `--shadow-lg` (calibradas para el fondo crema)
+* **Espaciado (`spacing`):** `--spacing-0-5` (2px), `--spacing-1` (4px), `--spacing-1-5` (6px), `--spacing-2` (8px), `--spacing-2-5` (10px), `--spacing-3` (12px), `--spacing-4` (16px), `--spacing-5` (20px), `--spacing-6` (24px), `--spacing-8` (32px), `--spacing-10` (40px), `--spacing-12` (48px), `--spacing-16` (64px), `--spacing-20` (80px) (malla base de 4px / 8px)
 
 ---
 
