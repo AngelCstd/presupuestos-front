@@ -11,7 +11,7 @@
 | # | Verificación | Criterio | Resultado |
 |---|---|---|---|
 | **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
-| **G2** | Suite Vitest existente | 207/207 en verde, `git diff --stat tests/` vacío | ✅ 207 tests pasan; diff en `tests/` vacío |
+| **G2** | Suite Vitest existente | Verde, y sin tests existentes modificados | ✅ 213/213 en verde (19 suites, incluyendo la suite nueva `tests/real-money.test.ts`; diff en los 18 archivos previos vacío) |
 | **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa (Next.js 15 App Router) |
 | **G4** | Ausencia de hex sueltos | `grep -rE '#[0-9a-fA-F]{3,8}'` en `src/` | ✅ Cero coincidencias |
 | **G5** | Strings fuera de i18n | Cero strings literales en componentes tocados | ✅ Cero en `InicioView.tsx` |
@@ -24,13 +24,16 @@
 
 ### 2. Qué cambió y por qué
 
+* **Cálculo estricto de dinero real (`calculateRealMoney`):**
+  * Se extrajo la función pura en `src/lib/domain/accounts.ts` con test dedicado (`tests/real-money.test.ts`).
+  * Suma exclusivamente cuentas `cash` y `credit` (donde la deuda resta). Ignora completamente `receivable`, `category` e `income_source`.
 * **Tope de "Por asignar" en $0.00 y jerarquía de Tarjeta Héroe:**
   * Si `dinero real < 0`: Muestra *"Sin dinero libre para repartir"*, indicando el exceso de deuda de tarjeta sobre el efectivo con explicación factual y enlace a `/cuentas`. "Por asignar" queda clampeado en `$0.00`.
   * Si hay sobregiros en sobres pero dinero real positivo: Muestra *"Sobres por ajustar"* con el total del déficit a cubrir y botón directo `[Revisar sobres]`. "Por asignar" queda en `$0.00`.
   * Si `unassignedCents > 0`: Muestra el monto libre para repartir con acción `[Repartir]`.
   * Si `unassignedCents === 0`: Se preserva la distinción entre *"Todo repartido"* (si hay presupuestos asignados) y *"Aún no repartes nada"* (si aún no se asigna nada).
-* **Eliminación del bloque "Últimos movimientos":**
-  * Se retiró de la vista principal para centrar el espacio vertical en móvil en la salud de sobres y saldos. El historial vive en su propio tab `/movimientos`.
+* **Bloque "Últimos movimientos" en Inicio (Resuelto solo):**
+  * La especificación original hablaba de cuatro bloques apilados, pero la auditoría del código demostró que "Últimos movimientos" nunca estuvo montado en `InicioView.tsx`. Por ende, no hubo que remover nada; la pantalla conserva sus 3 bloques estructurales (`Por asignar`, `Sobres`, `Cuentas`).
 * **Barra de resumen del periodo y días restantes:**
   * Se agregó al encabezado la métrica global *"Gastado este periodo: $X de $Y"* con barra de avance, permitiendo al usuario confirmar el impacto de sus gastos sin necesidad de scroll.
 * **Sobres priorizados por estado:**
@@ -50,26 +53,16 @@
 
 ---
 
-### 4. Qué aprendimos del repo (Documentación desactualizada)
+### 4. Decisiones pendientes y aparcadas (§4)
 
-1. **`tests/i18n.test.ts` audita comentarios en archivos fuente:**
-   * La suite busca términos del glosario leyendo el archivo como texto plano con `readSourceFile(file).includes(term)`.
-   * Un comentario como `// Sobres en sobregiro` en un archivo `.tsx` fuera de `lib/i18n/es.ts` hace tronar el test. Los comentarios en código no deben contener los 7 términos de glosario protegidos.
-2. **Divergencias en `SCREENS-front.md`:**
+1. **"Por asignar" inerte para quien vive en tarjeta:**
+   * Alguien que usa tarjeta como medio de pago principal y la liquida a fin de mes tendrá `dinero real < 0` durante buena parte de la quincena. En ese estado, la tarjeta héroe le mostrará *"Sin dinero libre para repartir"* durante días. Queda anotada la decisión de si para ese perfil de usuario la tarjeta héroe debe enfocarse en el estado de los sobres en lugar de en el saldo neto con tarjetas.
+2. **Confirmación de captura vacía:**
+   * En transacciones rutinarias en periodo abierto (`in_open_period`), `BudgetImpactMessage` devuelve `null`. Por tanto, la pantalla de confirmación de captura queda vacía con un botón "Listo". Prioridad para resolver en la Pantalla 3 (`/capturar/gasto`).
+3. **`bookedAt` y `description` faltan en `es.field`:**
+   * Se agregaron a `src/lib/i18n/es.ts` para su uso en vistas, pero no existen en la tabla congelada de la Parte 1 de `SCREENS-front.md`.
+4. **`SCREENS-front.md` desactualizado de la Parte 2 en adelante:**
    * La tabla de la Parte 1 define `period` como `"Periodo"`, pero a partir de la línea 253 el propio documento sigue usando `"quincena"` en rutas (`/quincenas`) y textos de diálogo. El código fuente ya fue migrado a `/periodos` de forma consistente.
-   * `bookedAt` y `description` faltan en `es.field` de `es.ts` (se agregaron para Inicio).
-   * "Saldo inicial" sigue en la tabla de intenciones de `SCREENS-front.md` a pesar de haber sido retirado de `/capturar/otro`.
-3. **Confirmación de captura (`BudgetImpactMessage`):**
-   * En transacciones rutinarias en periodo abierto (`in_open_period`), `BudgetImpactMessage` devuelve `null`. Por tanto, la pantalla de confirmación de captura queda vacía con un botón "Listo".
-   * Queda anotado como hallazgo prioritario para cuando se trabaje la pantalla 3 (`/capturar/gasto`).
-
----
-
-### 5. Qué sigue en la cola
-
-* **Siguiente elemento:** **Tarjeta de sobre** (componente `CategoryCard` / `EnvelopeCard`).
-* **Objetivo:** Reutilizable en Inicio y en `/sobres`, con barra de progreso, soporte visual no dependiente exclusivamente del color para los 4 estados (`no_budget`, `available`, `depleted`, `overspent`), y explicación legible del caso de sobregiro por captura tardía con spentCents en 0.
-
 
 ---
 
@@ -80,12 +73,12 @@
 | # | Verificación | Criterio | Resultado |
 |---|---|---|---|
 | **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
-| **G2** | Suite Vitest existente | 207/207 en verde, `git diff --stat tests/` vacío | ✅ 207 tests pasan; diff en `tests/` vacío |
+| **G2** | Suite Vitest existente | Verde | ✅ 213/213 en verde |
 | **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa (Next.js 15) |
 | **G4** | Ausencia de hex sueltos | `grep -rE '#[0-9a-fA-F]{3,8}'` en `src/` | ✅ Cero coincidencias |
 | **G5** | Strings fuera de i18n | Cero strings literales en componentes tocados | ✅ Cero en `CategoryCard.tsx` |
 | **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Cero |
-| **G7** | Llamadas de red | Componente puro de presentación y acción local | ✅ Cero llamadas directas (props declaradas) |
+| **G7** | Llamadas de red | Componente puro de presentación y acción local | ✅ Cero llamadas directas |
 | **G8** | Capturas de pantalla | 360px, 390px y 768px en `ux/tarjeta-sobre/` | ✅ Generadas y verificadas visualmente |
 | **G9** | Imports válidos | Todos registrados en `INVENTARIO.md` | ✅ Cumple |
 
@@ -106,27 +99,7 @@
 
 ---
 
-### 3. Evaluación contra las Tres Pruebas (`BRIEF-UX.md` §2)
-
-* **Prueba del número solo:** **Pasa.** Mirando la barra de avance y el monto disponible, el usuario sabe de inmediato si el sobre tiene margen para gastar o si está al límite, sin depender de la resta mental entre asignado y gastado.
-* **Prueba de la pregunta:** **Pasa.** Cuando un sobre está en sobregiro, el botón *"Cubrir"* aparece de forma prominente en la misma tarjeta.
-* **Prueba de la palabra:** **Pasa.** Se corrigió la concordancia de género ("con este periodo") y se eliminaron textos contables.
-
----
-
-### 4. Qué aprendimos del repo
-
-1. **`Category` vs. `InsightCategoryBalance`:**
-   * `GET /categories` devuelve `Category` con la propiedad `category.id` y `category.period`.
-   * `GET /insights/dashboard` devuelve `InsightCategoryBalance` con `category.categoryId` plano.
-   * `CategoryCard` está tipado contra `Category` (usado en `/sobres`). La versión de Inicio usa `EnvelopeProgressItem` compartiendo tokens y diseño visual idéntico.
-
----
-
-### 5. Qué sigue en la cola
+### 3. Qué sigue en la cola
 
 * **Siguiente pantalla:** **Pantalla 3: `/capturar/gasto`** (el 90% del uso diario).
-* **Foco prioritario del Council:**
-  1. Resolver la pantalla de confirmación vacía (hallazgo 5.1).
-  2. Simplificar el camino corto desde el FAB en móvil (uso con una mano en la fila del súper).
-  3. Advertencia preventiva antes de guardar si la fecha cae en un periodo cerrado.
+* **Acción previa obligatoria:** Redactar el `BRIEF-pantalla-capturar-gasto.md` antes de convocar al Council de 6 agentes.

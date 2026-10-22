@@ -12,7 +12,7 @@ import { EnvelopeStatusBadge } from '@/features/envelopes/components/EnvelopeSta
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useTimezone } from '@/providers/TimezoneProvider';
 import { todayInTimeZone } from '@/lib/domain/dates';
-import { isRealAccountKind } from '@/lib/domain/accounts';
+import { isRealAccountKind, calculateRealMoney } from '@/lib/domain/accounts';
 import { ApiError } from '@/lib/api/errors';
 import { es } from '@/lib/i18n/es';
 import type { DashboardResponse, InsightCategoryBalance } from '@/types/api';
@@ -88,14 +88,7 @@ function PeriodHeader({ dashboard }: { dashboard: DashboardResponse }) {
 }
 
 function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
-  const realAccounts = dashboard.accounts.filter((account) => isRealAccountKind(account.kind));
-  const cashTotal = realAccounts
-    .filter((a) => a.kind === 'cash')
-    .reduce((sum, a) => sum + BigInt(a.balanceCents), 0n);
-  const creditTotal = realAccounts
-    .filter((a) => a.kind === 'credit')
-    .reduce((sum, a) => sum + BigInt(a.balanceCents), 0n);
-  const realMoney = cashTotal + creditTotal;
+  const realMoney = calculateRealMoney(dashboard.accounts);
 
   const overspentCategories = dashboard.categories.filter((cat) => cat.status === 'overspent');
   const overspentDeficit = overspentCategories.reduce((sum, cat) => {

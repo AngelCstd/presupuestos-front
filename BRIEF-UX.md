@@ -15,7 +15,7 @@ Web, Next.js, mobile-first — se usa con el pulgar, parado en la fila del súpe
 Hace dos cosas:
 
 1. **Registra a dónde se va el dinero.** Cuentas, tarjetas, préstamos a amigos, historial.
-2. **Reparte el dinero antes de gastarlo.** Cada quincena tomas lo que entró y lo metes en
+2. **Reparte el dinero antes de gastarlo.** Cada periodo tomas lo que entró y lo metes en
    sobres con nombre: Comida, Transporte, Servicios. Gastas del sobre, no de la cuenta.
 
 La segunda es la razón de existir. La primera solo la sostiene.
@@ -42,12 +42,12 @@ Eso se traduce en tres pruebas que cualquier pantalla tiene que pasar:
 
 Tres ideas, y todas las decisiones de interfaz salen de qué tan bien se transmiten.
 
-**La quincena.** El presupuesto vive en un rango de fechas (típicamente 1–15 y 16–fin).
+**El periodo.** El presupuesto vive en un rango de fechas (típicamente 1–15 y 16–fin).
 Se abre, se reparte, se gasta, se cierra. Al cerrar queda congelada para siempre.
 
 **El sobre.** Una bolsa de dinero con nombre. Tiene tres números: **Asignado** (cuánto le
 pusiste), **Gastado** (cuánto salió), **Disponible** (lo que queda). Un sobre puede
-*acumular* lo que sobra para la siguiente quincena (Ahorro, Servicios) o *reiniciar* en
+*acumular* lo que sobra para el siguiente periodo (Ahorro, Servicios) o *reiniciar* en
 cero (Comida, Transporte).
 
 **Por asignar.** El dinero que tienes pero que todavía no metiste a ningún sobre. Es el
@@ -70,7 +70,7 @@ jerarquía y lenguaje sobre lo que ya corre.
 | Next.js App Router, TypeScript estricto, Tailwind + tokens en CSS variables | Listo |
 | TanStack Query con hidratación desde servidor; Zustand solo para borradores | Listo |
 | Las 7 formas de capturar dinero + correcciones | Listo |
-| Sobres, asignaciones, mover dinero entre sobres, cierre de quincena | Listo |
+| Sobres, asignaciones, mover dinero entre sobres, cierre de periodo | Listo |
 | Glosario español completo en `lib/i18n/es.ts` | Listo |
 | Estados vacíos definidos pantalla por pantalla | Listo, ver `SCREENS-front.md` |
 | Paleta: crema + sage, con los cuatro estados de sobre | Listo, con valores. Ver `INVENTARIO.md` |
@@ -82,13 +82,18 @@ flotante que va directo a capturar un gasto.
 
 **Pantallas:** `/` Inicio · `/sobres` y detalle · `/movimientos` y detalle ·
 `/capturar/gasto` (el camino corto) · `/capturar/otro` (las otras seis) · `/cuentas` ·
-`/quincenas` y la pantalla de cierre · `/recordatorios` · `/mas` · `/empezar` (onboarding).
+`/periodos` y la pantalla de cierre · `/recordatorios` · `/mas` · `/empezar` (onboarding).
 
 ---
 
 ## 5. Tus materiales — lo que la API ya te da
 
 Esto es lo que puedes pintar **sin tocar el backend**. Todo esto ya llega hoy.
+
+### Nota sobre `accounts[]`
+`GET /insights/dashboard` devuelve en `accounts[]` las cinco clases mezcladas: `cash`, `credit`, `receivable`, `category` e `income_source`. Para cualquier bloque o cálculo, el frontend debe filtrar según para qué:
+- **Cuentas reales:** `cash`, `credit`, `receivable` (vía `isRealAccountKind`).
+- **Dinero real:** únicamente `cash` + `credit` (la deuda resta). `receivable` se ignora (no se presupuesta lo que no se tiene en mano).
 
 ### Una sola llamada alimenta la pantalla principal
 
@@ -97,13 +102,13 @@ Esto es lo que puedes pintar **sin tocar el backend**. Todo esto ya llega hoy.
 | Campo | Qué es | Qué puedes construir con eso |
 |---|---|---|
 | `unassignedCents` | Dinero sin repartir | El número grande de Inicio |
-| `period` | La quincena actual con sus fechas y estado | Encabezado con el rango y los días que faltan |
+| `period` | El periodo actual con sus fechas y estado | Encabezado con el rango y los días que faltan |
 | `categories[]` | Por sobre: `name`, `assignedCents`, `spentCents`, `availableCents`, `hasBudget`, `status` | Barras de progreso, porcentaje usado, orden por urgencia |
-| `accounts[]` | Saldo por cuenta con su `kind` | Bloque de saldos, con la regla de signo ya resuelta |
-| `unbudgetedTransactions[]` | Gastos que no caen en ninguna quincena | Aviso suave, solo si hay |
+| `accounts[]` | Saldo por cuenta con su `kind` | Bloque de saldos, aplicando la regla de signo con `formatBalance` en el frontend (la API manda monto crudo con signo) |
+| `unbudgetedTransactions[]` | Gastos que no caen en ningun periodo | Aviso suave, solo si hay |
 
 **Y sumando `categories[]` en el cliente** — sin backend, sin endpoint nuevo — salen los
-totales de la quincena: cuánto asignaste, cuánto llevas gastado, cuánto te queda
+totales del periodo: cuánto asignaste, cuánto llevas gastado, cuánto te queda
 disponible, y el porcentaje del presupuesto usado. Ese bloque se puede construir hoy.
 
 ### El resto, por pantalla
@@ -115,7 +120,7 @@ disponible, y el porcentaje del presupuesto usado. Ese bloque se puede construir
 | Cuatro estados de sobre, visualmente distintos | `status`: `no_budget` · `available` · `depleted` · `overspent`, con su token de color cada uno |
 | Iconos por sobre | Mapa local nombre → icono en el frontend. No necesita backend |
 | Cubrir un sobregiro moviendo dinero de otro sobre | `POST /periods/{id}/allocations/move`, y la lista de sobres con saldo sale de la misma respuesta que ya tienes |
-| Mostrar qué pasa antes de cerrar una quincena | `GET /periods/{id}/close-preview` — no escribe nada, dice sobre por sobre qué se arrastra y qué se libera |
+| Mostrar qué pasa antes de cerrar un periodo | `GET /periods/{id}/close-preview` — no escribe nada, dice sobre por sobre qué se arrastra y qué se libera |
 | Saber si el botón de cerrar debe estar activo | `canClose` + `blockers` traducibles |
 | Ver qué cuentas tocó un movimiento, en español | El detalle ya trae los montos con su cuenta y su `kind` |
 
@@ -151,16 +156,16 @@ cliente. La pregunta de diseño es cómo se *dice* y qué acción se ofrece en c
 
 ### 6.2 Un sobre puede estar "en sobregiro" con cero gastado
 
-Pasa cuando registras un gasto con fecha de una quincena ya cerrada: el gasto se queda en
-la quincena vieja (que no se puede tocar), y el descuento aparece en la actual. Entonces el
-sobre de esta quincena dice "sobregiro de $500" con "gastado: $0".
+Pasa cuando registras un gasto con fecha de un periodo ya cerrado: el gasto se queda en
+el periodo viejo (que no se puede tocar), y el descuento aparece en el actual. Entonces el
+sobre de este periodo dice "sobregiro de $500" con "gastado: $0".
 
 Es correcto y la app ya lo explica en la tarjeta. **Verifica que esa explicación se
 entienda leyéndola una vez, sin releer.** Si hay que pensarla, hay que reescribirla.
 
 ### 6.3 La pantalla de Inicio no tiene jerarquía
 
-Cuatro bloques del mismo peso: Por asignar, sobres, cuentas, últimos movimientos. Nada
+Tres bloques principales: Por asignar, sobres y cuentas. Nada
 grita más fuerte que lo demás, así que el ojo no sabe dónde caer.
 
 Hay un orden natural: *¿cuánto me falta por repartir?* → *¿cómo van mis sobres?* →
@@ -177,17 +182,17 @@ pasó se ve distinto, no solo rojo.
 
 ### 6.5 Las siete formas de registrar dinero están nombradas desde el dominio
 
-El menú de `/capturar/otro` ofrece: Ingreso · Transferencia · Préstamo · Cobro ·
-**Dar por perdido** · **Saldo inicial**. Las dos últimas son lenguaje contable disfrazado.
+El menú de `/capturar/otro` ofrece cinco destinos: Ingreso · Transferencia · Préstamo · Cobro ·
+**Dar por perdido**. Saldo inicial no es una opción suelta: se captura exclusivamente en el detalle de una cuenta sin fondos bajo `/cuentas`.
 
 El camino corto (el botón flotante → capturar gasto) está bien resuelto y es el 90% del
 uso. El problema es el otro 10%: el usuario tiene que elegir una categoría de operación
 antes de saber qué está haciendo. Vale la pena replantear ese menú desde lo que la persona
 quiere hacer, no desde lo que la operación es.
 
-### 6.6 Cerrar una quincena es irreversible y la pantalla no pesa lo suficiente
+### 6.6 Cerrar un periodo es irreversible y la pantalla no pesa lo suficiente
 
-Al cerrar, las asignaciones de esa quincena quedan congeladas para siempre. No hay cómo
+Al cerrar, las asignaciones de ese periodo quedan congeladas para siempre. No hay cómo
 reabrirla. Es el único acto irreversible de la app.
 
 Hay una pantalla de previsualización que ya dice, sobre por sobre, qué se arrastra y qué se
@@ -196,14 +201,14 @@ editar. Hoy se avisa con texto.
 
 ### 6.7 Los avisos persistentes se ven como errores
 
-Dos banners viven en la app: *quincena vencida sin cerrar* y *movimientos sin quincena*.
+Dos banners viven en la app: *periodo vencido sin cerrar* y *movimientos sin periodo*.
 Ninguno de los dos es un error — son pendientes, tareas que el usuario puede hacer cuando
 quiera. Pero se pintan con el peso de algo roto.
 
-### 6.8 El mensaje después de guardar un gasto fuera de la quincena
+### 6.8 El mensaje después de guardar un gasto fuera del periodo
 
-Cuando registras un gasto con fecha vieja, la app responde: *"Se descontó de Comida en la
-quincena actual, porque esa quincena ya está cerrada."* Es exacto y es ilegible para quien
+Cuando registras un gasto con fecha vieja, la app responde: *"Se descontó de Comida en el
+periodo actual, porque ese periodo ya está cerrado."* Es exacto y es ilegible para quien
 no sabe cómo funciona el cierre. Hay que decir lo mismo en términos de lo que el usuario va
 a ver cambiar.
 
@@ -228,10 +233,10 @@ mucho aire, tarjetas con radio generoso, un solo acento de color, números grand
 centavos en menor tamaño, iconos redondos por categoría, barras de progreso delgadas.
 Tómala como dirección de **forma y jerarquía**, no como especificación:
 
-- Ahí el presupuesto se ve como un total mensual. Aquí es **por sobre, por quincena** —
+- Ahí el presupuesto se ve como un total mensual. Aquí es **por sobre, por periodo** —
   el total es la suma, y se puede mostrar, pero el control vive en cada sobre.
 - Ahí hay cinco tabs, uno de ellos "Metas". Aquí son cuatro. Lo que esa app llamaría una
-  meta, aquí ya existe: un sobre que *acumula* lo que le sobra, quincena tras quincena.
+  meta, aquí ya existe: un sobre que *acumula* lo que le sobra, periodo tras periodo.
   Si quieres que eso se vea como una meta, el dato está y el mecanismo también.
 - Ahí hay una barra de búsqueda en el historial. Aquí hay filtros. Mismo lugar, otra forma.
 
@@ -281,7 +286,7 @@ Dos cosas de aquí son vinculantes y se citan desde los otros documentos:
 
 **El orden de trabajo, pantalla por pantalla:** Inicio primero — ahí vive el peor problema
 (§6.1) y es la que más veces se ve al día. Después la tarjeta de sobre, que se reutiliza en
-dos pantallas. Después la captura de gasto, que es el 90% del uso. El cierre de quincena al
+dos pantallas. Después la captura de gasto, que es el 90% del uso. El cierre de periodo al
 final: es la más delicada y conviene llegar con el vocabulario ya resuelto.
 
 **Los tokens** (paleta, escala tipográfica, espaciado, radios) salen una sola vez, después

@@ -17,3 +17,21 @@ const REAL_ACCOUNT_KINDS: readonly AccountKind[] = ['cash', 'credit', 'receivabl
 export function isRealAccountKind(kind: AccountKind): kind is RealAccountKind {
   return REAL_ACCOUNT_KINDS.includes(kind);
 }
+
+/**
+ * Dinero real = saldo cash + saldo credit (deuda resta).
+ * receivable NO cuenta — no puedes presupuestar lo que no tienes en mano (API-CONTRACT.md §14).
+ * category e income_source se ignoran.
+ * Aritmética pura con BigInt en centavos.
+ */
+export function calculateRealMoney(
+  accounts: readonly { kind: AccountKind; balanceCents: string }[],
+): bigint {
+  let total = 0n;
+  for (const account of accounts) {
+    if (account.kind === 'cash' || account.kind === 'credit') {
+      total += BigInt(account.balanceCents);
+    }
+  }
+  return total;
+}
