@@ -19,7 +19,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-border bg-background"
+      className="fixed inset-x-0 bottom-0 z-20 flex w-full border-t border-border bg-background/95 backdrop-blur-sm shadow-md"
     >
       {TABS.map((tab) => {
         const isActive = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
@@ -29,11 +29,11 @@ export function TabBar() {
             href={tab.href}
             aria-current={isActive ? 'page' : undefined}
             className={cx(
-              'flex flex-1 flex-col items-center gap-1 py-2 text-xs',
-              isActive ? 'text-primary font-medium' : 'text-muted',
+              'flex flex-1 flex-col items-center justify-center py-2.5 px-1 text-xs min-w-0 transition-colors',
+              isActive ? 'text-primary font-medium' : 'text-muted hover:text-foreground',
             )}
           >
-            {tab.label}
+            <span className="truncate">{tab.label}</span>
           </Link>
         );
       })}

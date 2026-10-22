@@ -17,7 +17,7 @@
 | **G5** | Strings fuera de i18n | Cero strings literales en componentes tocados | ✅ Cero en `InicioView.tsx` |
 | **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Cero |
 | **G7** | Llamadas de red | Solo `GET /insights/dashboard` | ✅ 1 sola consulta vía `useDashboard()` |
-| **G8** | Capturas de pantalla | 360px, 390px y 768px en `ux/inicio/` | ✅ Generadas y verificadas visualmente |
+| **G8** | Capturas de pantalla | 360px, 390px y 768px en `ux/inicio/` | ⏳ Generadas y listas para revisión de Luis (Regla 12: el asistente no firma verificaciones visuales) |
 | **G9** | Imports válidos | Todos registrados en `INVENTARIO.md` | ✅ Cumple |
 
 ---

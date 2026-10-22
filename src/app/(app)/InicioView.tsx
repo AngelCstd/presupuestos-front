@@ -59,18 +59,18 @@ function PeriodHeader({ dashboard }: { dashboard: DashboardResponse }) {
     totalAssigned > 0n ? Math.min(Number((totalSpent * 100n) / totalAssigned), 100) : 0;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-background/40 p-4">
-      <div className="flex items-center justify-between text-xs text-muted">
-        <span>
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/40 p-4 shadow-sm min-w-0">
+      <div className="flex items-center justify-between gap-2 text-xs text-muted min-w-0">
+        <span className="shrink-0">
           {dashboard.period.startsOn} — {dashboard.period.endsOn}
         </span>
-        <span className="font-medium text-foreground">{daysLabel}</span>
+        <span className="font-medium text-foreground truncate">{daysLabel}</span>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted">{es.inicio.periodSpentHeader}</span>
-          <span className="font-medium text-foreground">
+      <div className="flex flex-col gap-1.5 min-w-0">
+        <div className="flex items-center justify-between gap-2 text-xs min-w-0">
+          <span className="text-muted shrink-0">{es.inicio.periodSpentHeader}</span>
+          <span className="font-medium text-foreground text-right truncate">
             <Money cents={totalSpent.toString()} />
             {es.inicio.ofTotal}
             <Money cents={totalAssigned.toString()} />
@@ -106,7 +106,7 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
         : `${count}${es.inicio.overspentCountSuffix}`;
 
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-state-overspent/40 bg-muted-background/60 p-5">
+      <div className="flex flex-col gap-3 rounded-xl border border-state-overspent/40 bg-muted-background/60 p-5 shadow-sm min-w-0">
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium text-state-overspent uppercase tracking-wider">
             {es.inicio.overspentHeroTitle}
@@ -117,11 +117,11 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
           <p className="text-xs text-muted">{overspentLabel}</p>
         </div>
 
-        <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
-          <span className="text-muted">
+        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2 text-xs">
+          <span className="text-muted shrink-0">
             {es.field.unassignedCents}: <Money cents="0" />
           </span>
-          <Link href="/sobres" className="font-medium text-primary underline">
+          <Link href="/sobres" className="font-medium text-primary underline shrink-0">
             {es.inicio.reviewEnvelopes}
           </Link>
         </div>
@@ -132,7 +132,7 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
   // Situación 2: Dinero libre para repartir
   if (unassigned > 0n) {
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-background/60 p-5">
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/60 p-5 shadow-sm min-w-0">
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium text-muted uppercase tracking-wider">
             {es.field.unassignedCents}
@@ -188,15 +188,15 @@ function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }
 
   return (
     <li
-      className={`flex flex-col gap-2 rounded-lg border p-3 ${
+      className={`flex flex-col gap-2 rounded-lg border p-3 shadow-sm min-w-0 ${
         isOverspent
           ? 'border-state-overspent/50 bg-muted-background/30'
           : 'border-border bg-background'
       }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium text-foreground">{category.name}</span>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <span className="min-w-0 truncate font-medium text-foreground">{category.name}</span>
+        <div className="flex shrink-0 items-center gap-2">
           <EnvelopeStatusBadge status={category.status} />
           {hasBudget ? (
             <span
@@ -208,7 +208,7 @@ function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }
           {isOverspent ? (
             <Link
               href="/sobres"
-              className="rounded bg-state-overspent/10 px-2 py-0.5 text-xs font-medium text-state-overspent underline"
+              className="rounded bg-state-overspent/10 px-2 py-0.5 text-xs font-medium text-state-overspent underline shrink-0"
             >
               {es.inicio.coverOverspend}
             </Link>
@@ -264,7 +264,7 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
   const noBudgetCategories = dashboard.categories.filter((cat) => cat.status === 'no_budget');
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 min-w-0">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-foreground">{es.inicio.envelopesTitle}</p>
         <Link href="/sobres" className="text-xs font-medium text-primary underline">
@@ -275,7 +275,7 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
       {allNoSpend && overspentCategories.length === 0 ? (
         <EmptyState tone="exito" title={es.inicio.noExpensesYet} />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 min-w-0">
           {/* 1. Categorias en sobregiro primero */}
           {overspentCategories.map((category) => (
             <EnvelopeProgressItem key={category.categoryId} category={category} />
@@ -297,7 +297,7 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
                 {`${noBudgetCategories.length}${es.inicio.noBudgetCountSuffix}`}
               </button>
               {showNoBudget ? (
-                <ul className="mt-2 flex flex-col gap-2">
+                <ul className="mt-2 flex flex-col gap-2 min-w-0">
                   {noBudgetCategories.map((category) => (
                     <EnvelopeProgressItem key={category.categoryId} category={category} />
                   ))}
@@ -322,31 +322,31 @@ function AccountsBlock({ dashboard }: { dashboard: DashboardResponse }) {
   const realMoney = calculateRealMoney(dashboard.accounts);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-background/30 p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-foreground">{es.inicio.accountsTitle}</p>
-        <Link href="/cuentas" className="text-xs font-medium text-primary underline">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/30 p-4 shadow-sm min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground shrink-0">{es.inicio.accountsTitle}</p>
+        <Link href="/cuentas" className="text-xs font-medium text-primary underline shrink-0">
           {es.inicio.viewPending}
         </Link>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted">{es.inicio.cashTitle}</span>
-          <span className="font-medium text-foreground">
+      <div className="flex flex-col gap-2 min-w-0">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="text-muted shrink-0">{es.inicio.cashTitle}</span>
+          <span className="font-medium text-foreground text-right">
             <Money cents={cashTotal.toString()} />
           </span>
         </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted">{es.inicio.creditTitle}</span>
-          <span className="font-medium text-foreground">
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className="text-muted shrink-0">{es.inicio.creditTitle}</span>
+          <span className="font-medium text-foreground text-right">
             <Balance cents={creditTotal.toString()} kind="credit" />
           </span>
         </div>
         {receivableAccounts.length > 0 ? (
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted">{es.inicio.receivableTitle}</span>
-            <span className="font-medium text-foreground">
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="text-muted shrink-0">{es.inicio.receivableTitle}</span>
+            <span className="font-medium text-foreground text-right">
               <Balance
                 cents={receivableAccounts
                   .reduce((sum, a) => sum + BigInt(a.balanceCents), 0n)
@@ -373,10 +373,10 @@ export function InicioView() {
 
   if (isLoading || !data) {
     return (
-      <div className="flex flex-col gap-4 p-4">
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-48 w-full" />
+      <div className="mx-auto flex w-full max-w-lg flex-col gap-4 p-4 min-w-0">
+        <Skeleton className="h-20 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
       </div>
     );
   }
@@ -386,7 +386,7 @@ export function InicioView() {
   }
 
   return (
-    <div className="flex flex-col gap-5 p-4">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-5 p-4 min-w-0">
       {data.unbudgetedTransactions.length > 0 ? (
         <Banner
           message={`${data.unbudgetedTransactions.length}${es.inicio.unbudgetedSuffix}`}
