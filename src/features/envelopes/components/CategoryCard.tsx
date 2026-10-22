@@ -35,8 +35,13 @@ export function CategoryCard({
   const isOverspentFromClosedPeriod = isOverspent && period.spentCents === '0';
 
   const assigned = BigInt(period.assignedCents);
-  const spent = BigInt(period.spentCents);
-  const percentage = assigned > 0n ? Math.min(Number((spent * 100n) / assigned), 100) : 0;
+  const available = BigInt(period.availableCents);
+  // Semantica de la barra: Mide el monto que queda en la categoria,
+  // concordando directamente con la cifra restante que tiene al lado.
+  const availablePercentage =
+    assigned > 0n
+      ? Math.max(0, Math.min(Number((available * 100n) / assigned), 100))
+      : 0;
 
   let progressColor = 'bg-state-available';
   if (isOverspent) progressColor = 'bg-state-overspent';
@@ -94,7 +99,7 @@ export function CategoryCard({
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">
             <div
               className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
-              style={{ width: `${percentage}%` }}
+              style={{ width: `${availablePercentage}%` }}
             />
           </div>
         </div>

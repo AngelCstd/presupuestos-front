@@ -65,9 +65,9 @@ const htmlContent = `<!DOCTYPE html>
           </p>
           <p class="text-xs text-muted">1 sobre gastó más de lo asignado.</p>
         </div>
-        <div class="flex items-center justify-between gap-2 border-t border-border/60 pt-2 text-xs">
+        <div class="flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs">
           <span class="text-muted shrink-0">Por asignar: <span>$0<span class="text-[0.8em] font-normal opacity-75">.00</span></span></span>
-          <a href="#" class="font-medium text-primary underline shrink-0">Revisar sobres</a>
+          <a href="#" class="inline-flex items-center justify-center rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:opacity-95 active:scale-95 shrink-0">Revisar sobres</a>
         </div>
       </div>
 
@@ -75,34 +75,34 @@ const htmlContent = `<!DOCTYPE html>
       <div class="flex flex-col gap-3 min-w-0">
         <div class="flex items-center justify-between gap-2">
           <p class="text-xs font-semibold uppercase tracking-wider text-muted shrink-0">Sobres del periodo</p>
-          <a href="#" class="text-xs font-medium text-primary underline shrink-0">Repartir</a>
+          <a href="#" class="text-xs font-medium text-primary hover:underline shrink-0">Repartir</a>
         </div>
 
         <ul class="flex flex-col gap-2 min-w-0">
-          <!-- 1. Sobre en sobregiro (Salidas) -->
+          <!-- 1. Sobre en sobregiro (Salidas: 0% disponible restante, borde y badge de alerta) -->
           <li class="flex flex-col gap-2 rounded-lg border border-state-overspent/50 bg-muted-background/30 p-3 shadow-sm min-w-0">
             <div class="flex items-center justify-between gap-2 min-w-0">
               <span class="min-w-0 truncate font-medium text-foreground">Salidas</span>
               <div class="flex shrink-0 items-center gap-2">
                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-state-overspent/15 text-state-overspent">Sobregiro</span>
-                <span class="font-medium text-state-overspent">
+                <span class="font-semibold text-state-overspent">
                   <span>-$350<span class="text-[0.8em] font-normal opacity-75">.00</span></span>
                 </span>
-                <a href="#" class="rounded bg-state-overspent/10 px-2 py-0.5 text-xs font-medium text-state-overspent underline shrink-0">Cubrir</a>
+                <a href="#" class="inline-flex items-center justify-center rounded-md bg-state-overspent px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-transform hover:opacity-90 active:scale-95 shrink-0">Cubrir</a>
               </div>
             </div>
             <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">
-              <div class="h-full rounded-full bg-state-overspent" style="width: 100%"></div>
+              <div class="h-full rounded-full bg-state-overspent" style="width: 0%"></div>
             </div>
           </li>
 
-          <!-- 2. Sobre disponible (Comida) -->
+          <!-- 2. Sobre disponible (Comida: 62.5% disponible restante) -->
           <li class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3 shadow-sm min-w-0">
             <div class="flex items-center justify-between gap-2 min-w-0">
               <span class="min-w-0 truncate font-medium text-foreground">Comida</span>
               <div class="flex shrink-0 items-center gap-2">
                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-state-available/15 text-state-available">Disponible</span>
-                <span class="font-medium text-foreground">
+                <span class="font-semibold text-foreground">
                   <span>$2,500<span class="text-[0.8em] font-normal opacity-75">.00</span></span>
                 </span>
               </div>
@@ -112,19 +112,19 @@ const htmlContent = `<!DOCTYPE html>
             </div>
           </li>
 
-          <!-- 3. Sobre agotado (Transporte) -->
+          <!-- 3. Sobre agotado (Transporte: 0% disponible restante) -->
           <li class="flex flex-col gap-2 rounded-lg border border-border bg-background p-3 shadow-sm min-w-0">
             <div class="flex items-center justify-between gap-2 min-w-0">
               <span class="min-w-0 truncate font-medium text-foreground">Transporte</span>
               <div class="flex shrink-0 items-center gap-2">
                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-state-depleted/15 text-state-depleted">Agotado</span>
-                <span class="font-medium text-foreground">
+                <span class="font-semibold text-foreground">
                   <span>$0<span class="text-[0.8em] font-normal opacity-75">.00</span></span>
                 </span>
               </div>
             </div>
             <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">
-              <div class="h-full rounded-full bg-state-depleted" style="width: 100%"></div>
+              <div class="h-full rounded-full bg-state-depleted" style="width: 0%"></div>
             </div>
           </li>
 
@@ -141,7 +141,7 @@ const htmlContent = `<!DOCTYPE html>
       <div class="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/30 p-4 shadow-sm min-w-0">
         <div class="flex items-center justify-between gap-2">
           <p class="text-xs font-semibold uppercase tracking-wider text-muted shrink-0">Cuentas y saldos</p>
-          <a href="#" class="text-xs font-medium text-primary underline shrink-0">Ver</a>
+          <a href="#" class="text-xs font-medium text-primary hover:underline shrink-0">Ver</a>
         </div>
 
         <div class="flex flex-col gap-2 min-w-0">
@@ -170,28 +170,27 @@ const htmlContent = `<!DOCTYPE html>
 
     </div>
 
-    <!-- Floating Action Button (FAB) -->
-    <div class="fixed bottom-16 right-4 z-20">
-      <a href="#" class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95" aria-label="Capturar gasto">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </a>
-    </div>
-
-    <!-- TabBar (fiel a TabBar.tsx con tokens) -->
-    <nav aria-label="Navegación principal" class="fixed inset-x-0 bottom-0 z-20 flex w-full border-t border-border bg-background/95 backdrop-blur-sm shadow-md">
-      <a href="#" aria-current="page" class="flex flex-1 flex-col items-center justify-center py-2.5 px-1 text-xs min-w-0 transition-colors text-primary font-medium">
+    <!-- TabBar (fiel a TabBar.tsx con FAB Opción A integrado al centro) -->
+    <nav aria-label="Navegación principal" class="fixed inset-x-0 bottom-0 z-20 flex h-16 w-full items-center justify-around border-t border-border bg-background/95 backdrop-blur-sm shadow-md px-2">
+      <a href="#" aria-current="page" class="flex flex-1 flex-col items-center justify-center py-1 text-xs min-w-0 transition-colors text-primary font-medium">
         <span class="truncate">Inicio</span>
       </a>
-      <a href="#" class="flex flex-1 flex-col items-center justify-center py-2.5 px-1 text-xs min-w-0 transition-colors text-muted hover:text-foreground">
+      <a href="#" class="flex flex-1 flex-col items-center justify-center py-1 text-xs min-w-0 transition-colors text-muted hover:text-foreground">
         <span class="truncate">Sobres</span>
       </a>
-      <a href="#" class="flex flex-1 flex-col items-center justify-center py-2.5 px-1 text-xs min-w-0 transition-colors text-muted hover:text-foreground">
+      <!-- Botón Central Hero Action: Capturar gasto (FAB Opción A) -->
+      <div class="relative -top-4 flex shrink-0 items-center justify-center px-1">
+        <a href="#" aria-label="Capturar un gasto" class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95 border-4 border-background">
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </a>
+      </div>
+      <a href="#" class="flex flex-1 flex-col items-center justify-center py-1 text-xs min-w-0 transition-colors text-muted hover:text-foreground">
         <span class="truncate">Movimientos</span>
       </a>
-      <a href="#" class="flex flex-1 flex-col items-center justify-center py-2.5 px-1 text-xs min-w-0 transition-colors text-muted hover:text-foreground">
+      <a href="#" class="flex flex-1 flex-col items-center justify-center py-1 text-xs min-w-0 transition-colors text-muted hover:text-foreground">
         <span class="truncate">Más</span>
       </a>
     </nav>

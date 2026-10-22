@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Fab } from '@/components/layout/Fab';
 import { TabBar } from '@/components/layout/TabBar';
 import { listAccounts } from '@/features/accounts/services/accounts';
 
@@ -16,9 +15,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="pb-16">
+    <div className="pb-28">
       {children}
-      <Fab />
       <TabBar />
     </div>
   );

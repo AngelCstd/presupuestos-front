@@ -128,11 +128,14 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
           <p className="text-xs text-muted">{overspentLabel}</p>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2 text-xs">
+        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs">
           <span className="text-muted shrink-0">
             {es.field.unassignedCents}: <Money cents="0" />
           </span>
-          <Link href="/sobres" className="font-medium text-primary underline shrink-0">
+          <Link
+            href="/sobres"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:opacity-95 active:scale-95 shrink-0"
+          >
             {es.inicio.reviewEnvelopes}
           </Link>
         </div>
@@ -154,8 +157,12 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
           <p className="text-xs text-muted">{es.inicio.readyToAssign}</p>
         </div>
 
-        <div className="border-t border-border/60 pt-2">
-          <Link href="/sobres" className="text-xs font-medium text-primary underline">
+        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs">
+          <span className="text-muted">{es.inicio.readyToAssign}</span>
+          <Link
+            href="/sobres"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:opacity-95 active:scale-95 shrink-0"
+          >
             {es.inicio.assignAction}
           </Link>
         </div>
@@ -186,12 +193,17 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
 
 function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }) {
   const assigned = BigInt(category.assignedCents);
-  const spent = BigInt(category.spentCents);
+  const available = BigInt(category.availableCents);
   const isOverspent = category.status === 'overspent';
   const isDepleted = category.status === 'depleted';
   const hasBudget = category.hasBudget;
 
-  const percentage = assigned > 0n ? Math.min(Number((spent * 100n) / assigned), 100) : 0;
+  // Semantica de la barra: Mide el monto que queda en la categoria,
+  // concordando directamente con la cifra restante que tiene al lado.
+  const availablePercentage =
+    assigned > 0n
+      ? Math.max(0, Math.min(Number((available * 100n) / assigned), 100))
+      : 0;
 
   let progressColor = 'bg-state-available';
   if (isOverspent) progressColor = 'bg-state-overspent';
@@ -211,7 +223,7 @@ function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }
           <EnvelopeStatusBadge status={category.status} />
           {hasBudget ? (
             <span
-              className={`font-medium ${isOverspent ? 'text-state-overspent' : 'text-foreground'}`}
+              className={`font-semibold ${isOverspent ? 'text-state-overspent' : 'text-foreground'}`}
             >
               <Money cents={category.availableCents} />
             </span>
@@ -219,7 +231,7 @@ function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }
           {isOverspent ? (
             <Link
               href="/sobres"
-              className="rounded bg-state-overspent/10 px-2 py-0.5 text-xs font-medium text-state-overspent underline shrink-0"
+              className="inline-flex items-center justify-center rounded-md bg-state-overspent px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-transform hover:opacity-90 active:scale-95 shrink-0"
             >
               {es.inicio.coverOverspend}
             </Link>
@@ -231,7 +243,7 @@ function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">
           <div
             className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
-            style={{ width: `${percentage}%` }}
+            style={{ width: `${availablePercentage}%` }}
           />
         </div>
       ) : null}
@@ -397,7 +409,7 @@ export function InicioView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-5 p-4 min-w-0">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-5 p-4 min-w-0 pb-28">
       {data.unbudgetedTransactions.length > 0 ? (
         <Banner
           message={`${data.unbudgetedTransactions.length}${es.inicio.unbudgetedSuffix}`}

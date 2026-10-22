@@ -38,8 +38,22 @@
   * Token `--font-size-hero` (40px bold) para que el monto del héroe domine claramente la pantalla.
   * Títulos de sección subordinados a `text-xs font-semibold uppercase tracking-wider text-muted`.
   * Componentes `Money` y `Balance` ahora renderizan los centavos en menor tamaño relativo (`text-[0.8em] font-normal opacity-75`) para reducir ruido visual y jerarquizar pesos sobre centavos.
-* **Tokens de diseño formales completados:**
-  * Escala tipográfica (`fontSize`: `2xs` a `hero`), radios de curvatura (`borderRadius`: `xs` a `full`), elevaciones/sombras (`boxShadow`: `sm`, `md`, `lg`) y malla de espaciado (`spacing`: `0.5` a `20`) formalizados en variables CSS en `globals.css` y cableados en `tailwind.config.ts`.
+* **Semántica unificada de la barra de sobres (Mide Disponible restante):**
+  * La barra horizontal mide exactamente el dinero que **queda** en el sobre (`availableCents / assignedCents`), concordando 1:1 con la cifra de "Disponible" que tiene al lado.
+  * Al inicio del periodo o con presupuesto intacto: la barra está al 100% (llena en azul `--state-available`). Conforme se gasta se vacía proporcionalmente (metáfora de tanque/batería).
+  * En sobre agotado (`depleted` / $0.00) y sobregiro (`overspent` / déficit): la barra de disponible está al 0% (vacía), y en sobregiro se refuerza mediante borde y badge de alerta rojo. Misma semántica aplicada en `InicioView` y `CategoryCard`.
+* **Jerarquía clara de acciones (Botón vs. Enlace de navegación):**
+  * Las acciones inmediatas que resuelven una situación tienen forma de botón táctil prominente:
+    * `[Revisar sobres]` en la tarjeta héroe: botón primario sólido con sombra y radio generoso.
+    * `[Repartir]` en la tarjeta héroe cuando hay fondos sin asignar: botón primario sólido.
+    * `[Cubrir]` en sobres con déficit: botón sólido de alerta (`bg-state-overspent text-white`).
+  * Los accesos de exploración secundaria permanecen como enlaces de texto discretos:
+    * `"Repartir"` en el título de la sección de sobres.
+    * `"Ver"` en el título de la sección de cuentas.
+* **Barra de navegación con FAB Central Integrado (Opción A):**
+  * La barra inferior fija (`TabBar`) integra la acción principal de la app (capturar gasto) al centro en un botón circular de 56px de diámetro elevado sobre la barra (`bg-primary text-white shadow-lg` con borde exterior de separación).
+  * Distribución ergonómica simétrica: 2 tabs a la izquierda (`Inicio`, `Sobres`), botón central `(+)`, y 2 tabs a la derecha (`Movimientos`, `Más`).
+  * Se asignó `pb-28` al contenedor y al layout para garantizar que al final del scroll todo el bloque de cuentas (incluyendo "Te deben") quede 100% visible sin ser tapado por la barra.
 * **Bloque "Últimos movimientos" en Inicio (Resuelto solo):**
   * La especificación original hablaba de cuatro bloques apilados, pero la auditoría del código demostró que "Últimos movimientos" nunca estuvo montado en `InicioView.tsx`. Por ende, no hubo que remover nada; la pantalla conserva sus 3 bloques estructurales (`Por asignar`, `Sobres`, `Cuentas`).
 * **Barra de resumen del periodo y días restantes:**
