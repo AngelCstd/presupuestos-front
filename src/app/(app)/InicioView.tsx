@@ -13,6 +13,7 @@ import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useTimezone } from '@/providers/TimezoneProvider';
 import { todayInTimeZone } from '@/lib/domain/dates';
 import { isRealAccountKind, calculateRealMoney } from '@/lib/domain/accounts';
+import { calculateEnvelopeProgress } from '@/lib/domain/envelopes';
 import { ApiError } from '@/lib/api/errors';
 import { es } from '@/lib/i18n/es';
 import type { DashboardResponse, InsightCategoryBalance } from '@/types/api';
@@ -191,29 +192,37 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
   );
 }
 
-function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }) {
-  const assigned = BigInt(category.assignedCents);
-  const available = BigInt(category.availableCents);
+function EnvelopeProgressItem({
+  category,
+  hasCoveringFunds = false,
+}: {
+  category: InsightCategoryBalance;
+  hasCoveringFunds?: boolean;
+}) {
+  const { availablePercentage } = calculateEnvelopeProgress({
+    assignedCents: category.assignedCents,
+    spentCents: category.spentCents,
+    availableCents: category.availableCents,
+    status: category.status,
+  });
+
   const isOverspent = category.status === 'overspent';
   const isDepleted = category.status === 'depleted';
   const hasBudget = category.hasBudget;
-
-  // Semantica de la barra: Mide el monto que queda en la categoria,
-  // concordando directamente con la cifra restante que tiene al lado.
-  const availablePercentage =
-    assigned > 0n
-      ? Math.max(0, Math.min(Number((available * 100n) / assigned), 100))
-      : 0;
 
   let progressColor = 'bg-state-available';
   if (isOverspent) progressColor = 'bg-state-overspent';
   else if (isDepleted) progressColor = 'bg-state-depleted';
 
+  const coverButtonColor = hasCoveringFunds ? 'bg-state-depleted' : 'bg-state-overspent';
+
   return (
     <li
       className={`flex flex-col gap-2 rounded-lg border p-3 shadow-sm min-w-0 ${
         isOverspent
-          ? 'border-state-overspent/50 bg-muted-background/30'
+          ? hasCoveringFunds
+            ? 'border-state-depleted/40 bg-muted-background/30'
+            : 'border-state-overspent/50 bg-muted-background/30'
           : 'border-border bg-background'
       }`}
     >
@@ -223,7 +232,13 @@ function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }
           <EnvelopeStatusBadge status={category.status} />
           {hasBudget ? (
             <span
-              className={`font-semibold ${isOverspent ? 'text-state-overspent' : 'text-foreground'}`}
+              className={`font-semibold ${
+                isOverspent
+                  ? hasCoveringFunds
+                    ? 'text-state-depleted'
+                    : 'text-state-overspent'
+                  : 'text-foreground'
+              }`}
             >
               <Money cents={category.availableCents} />
             </span>
@@ -231,7 +246,7 @@ function EnvelopeProgressItem({ category }: { category: InsightCategoryBalance }
           {isOverspent ? (
             <Link
               href="/sobres"
-              className="inline-flex items-center justify-center rounded-md bg-state-overspent px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-transform hover:opacity-90 active:scale-95 shrink-0"
+              className={`inline-flex items-center justify-center rounded-md ${coverButtonColor} px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-transform hover:opacity-90 active:scale-95 shrink-0`}
             >
               {es.inicio.coverOverspend}
             </Link>
@@ -285,6 +300,9 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
     (cat) => cat.status === 'available' || cat.status === 'depleted',
   );
   const noBudgetCategories = dashboard.categories.filter((cat) => cat.status === 'no_budget');
+  const hasCoveringFunds = dashboard.categories.some(
+    (c) => c.status !== 'overspent' && BigInt(c.availableCents) > 0n,
+  );
 
   return (
     <div className="flex flex-col gap-3 min-w-0">
@@ -301,12 +319,20 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
         <ul className="flex flex-col gap-2 min-w-0">
           {/* 1. Categorias en sobregiro primero */}
           {overspentCategories.map((category) => (
-            <EnvelopeProgressItem key={category.categoryId} category={category} />
+            <EnvelopeProgressItem
+              key={category.categoryId}
+              category={category}
+              hasCoveringFunds={hasCoveringFunds}
+            />
           ))}
 
           {/* 2. Categorias activas con presupuesto */}
           {activeCategories.map((category) => (
-            <EnvelopeProgressItem key={category.categoryId} category={category} />
+            <EnvelopeProgressItem
+              key={category.categoryId}
+              category={category}
+              hasCoveringFunds={hasCoveringFunds}
+            />
           ))}
 
           {/* 3. Categorias sin presupuesto (colapsadas) */}
@@ -322,7 +348,11 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
               {showNoBudget ? (
                 <ul className="mt-2 flex flex-col gap-2 min-w-0">
                   {noBudgetCategories.map((category) => (
-                    <EnvelopeProgressItem key={category.categoryId} category={category} />
+                    <EnvelopeProgressItem
+                      key={category.categoryId}
+                      category={category}
+                      hasCoveringFunds={hasCoveringFunds}
+                    />
                   ))}
                 </ul>
               ) : null}
@@ -409,7 +439,7 @@ export function InicioView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-5 p-4 min-w-0 pb-28">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-5 p-4 min-w-0">
       {data.unbudgetedTransactions.length > 0 ? (
         <Banner
           message={`${data.unbudgetedTransactions.length}${es.inicio.unbudgetedSuffix}`}

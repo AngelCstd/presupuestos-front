@@ -79,16 +79,16 @@ const htmlContent = `<!DOCTYPE html>
         </div>
 
         <ul class="flex flex-col gap-2 min-w-0">
-          <!-- 1. Sobre en sobregiro (Salidas: 0% disponible restante, borde y badge de alerta) -->
-          <li class="flex flex-col gap-2 rounded-lg border border-state-overspent/50 bg-muted-background/30 p-3 shadow-sm min-w-0">
+          <!-- 1. Sobre en sobregiro (Salidas: caso cubrible con Comida, botón Cubrir en tono de atención ocre) -->
+          <li class="flex flex-col gap-2 rounded-lg border border-state-depleted/40 bg-muted-background/30 p-3 shadow-sm min-w-0">
             <div class="flex items-center justify-between gap-2 min-w-0">
               <span class="min-w-0 truncate font-medium text-foreground">Salidas</span>
               <div class="flex shrink-0 items-center gap-2">
                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-state-overspent/15 text-state-overspent">Sobregiro</span>
-                <span class="font-semibold text-state-overspent">
+                <span class="font-semibold text-state-depleted">
                   <span>-$350<span class="text-[0.8em] font-normal opacity-75">.00</span></span>
                 </span>
-                <a href="#" class="inline-flex items-center justify-center rounded-md bg-state-overspent px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-transform hover:opacity-90 active:scale-95 shrink-0">Cubrir</a>
+                <a href="#" class="inline-flex items-center justify-center rounded-md bg-state-depleted px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-transform hover:opacity-90 active:scale-95 shrink-0">Cubrir</a>
               </div>
             </div>
             <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">

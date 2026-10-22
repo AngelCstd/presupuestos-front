@@ -6,6 +6,7 @@ import { Money } from '@/components/money/Money';
 import { AmountInput } from '@/components/money/AmountInput';
 import { Button } from '@/components/ui/Button';
 import { EnvelopeStatusBadge } from '@/features/envelopes/components/EnvelopeStatusBadge';
+import { calculateEnvelopeProgress } from '@/lib/domain/envelopes';
 import { es } from '@/lib/i18n/es';
 import type { Category } from '@/types/api';
 
@@ -34,14 +35,12 @@ export function CategoryCard({
   const isDepleted = period.status === 'depleted';
   const isOverspentFromClosedPeriod = isOverspent && period.spentCents === '0';
 
-  const assigned = BigInt(period.assignedCents);
-  const available = BigInt(period.availableCents);
-  // Semantica de la barra: Mide el monto que queda en la categoria,
-  // concordando directamente con la cifra restante que tiene al lado.
-  const availablePercentage =
-    assigned > 0n
-      ? Math.max(0, Math.min(Number((available * 100n) / assigned), 100))
-      : 0;
+  const { availablePercentage } = calculateEnvelopeProgress({
+    assignedCents: period.assignedCents,
+    spentCents: period.spentCents,
+    availableCents: period.availableCents,
+    status: period.status,
+  });
 
   let progressColor = 'bg-state-available';
   if (isOverspent) progressColor = 'bg-state-overspent';
