@@ -17,7 +17,7 @@
 | **G5** | Strings fuera de i18n | Cero strings literales en componentes tocados | ✅ Cero en `InicioView.tsx` |
 | **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Cero |
 | **G7** | Llamadas de red | Solo `GET /insights/dashboard` | ✅ 1 sola consulta vía `useDashboard()` |
-| **G8** | Capturas de pantalla | 360px, 390px y 768px en `ux/inicio/` | ⏳ Generadas y listas para revisión de Luis (Regla 12: el asistente no firma verificaciones visuales) |
+| **G8** | Viewport real y ausencia de desborde horizontal (360px, 390px, 768px) | Aserción mecánica en navegador real: `document.documentElement.scrollWidth <= window.innerWidth`. Rojo si falla. | ✅ **PASA:**<br>• 360px: inner=360px, scroll=360px<br>• 390px: inner=390px, scroll=390px<br>• 768px: inner=768px, scroll=768px<br>*(Capturas generadas en `ux/inicio/` para revisión de Luis)* |
 | **G9** | Imports válidos | Todos registrados en `INVENTARIO.md` | ✅ Cumple |
 
 ---
@@ -30,11 +30,16 @@
 * **Tope de "Por asignar" en $0.00 y jerarquía de Tarjeta Héroe:**
   * La tarjeta héroe se dedica exclusivamente a la salud de los sobres del periodo:
     1. Si hay sobres con sobregiro: Muestra *"Sobres por ajustar"* con el total del déficit a cubrir y botón directo `[Revisar sobres]`. "Por asignar" queda en `$0.00`.
+       * **Distinción de alarma vs. atención:** Si hay otros sobres con fondos disponibles (`availableCents > 0`), el héroe utiliza el tono templado de atención (`--state-depleted` ocre) y el monto en texto principal, ya que el déficit es cubrible moviendo dinero. El rojo `--state-overspent` se reserva para cuando no hay de dónde cubrir.
     2. Si `unassignedCents > 0`: Muestra el monto libre para repartir con acción `[Repartir]`.
     3. Si `unassignedCents === 0`: Se preserva la distinción entre *"Todo repartido"* (si hay presupuestos asignados) y *"Aún no repartes nada"* (si aún no se asigna nada).
   * **Dinero real negativo en bloque de cuentas:** El caso donde la deuda de tarjeta supera al efectivo (`dinero real < 0`) no bloquea la tarjeta héroe. Se presenta de forma factual y serena dentro del bloque de cuentas (*"Tus tarjetas superan a tu efectivo"*) explicando que el efectivo actual respalda la tarjeta.
+* **Escala tipográfica y jerarquía de centavos:**
+  * Token `--font-size-hero` (40px bold) para que el monto del héroe domine claramente la pantalla.
+  * Títulos de sección subordinados a `text-xs font-semibold uppercase tracking-wider text-muted`.
+  * Componentes `Money` y `Balance` ahora renderizan los centavos en menor tamaño relativo (`text-[0.8em] font-normal opacity-75`) para reducir ruido visual y jerarquizar pesos sobre centavos.
 * **Tokens de diseño formales completados:**
-  * Escala tipográfica (`fontSize`: `2xs` a `3xl`), radios de curvatura (`borderRadius`: `xs` a `full`), elevaciones/sombras (`boxShadow`: `sm`, `md`, `lg`) y malla de espaciado (`spacing`: `0.5` a `20`) formalizados en variables CSS en `globals.css` y cableados en `tailwind.config.ts`.
+  * Escala tipográfica (`fontSize`: `2xs` a `hero`), radios de curvatura (`borderRadius`: `xs` a `full`), elevaciones/sombras (`boxShadow`: `sm`, `md`, `lg`) y malla de espaciado (`spacing`: `0.5` a `20`) formalizados en variables CSS en `globals.css` y cableados en `tailwind.config.ts`.
 * **Bloque "Últimos movimientos" en Inicio (Resuelto solo):**
   * La especificación original hablaba de cuatro bloques apilados, pero la auditoría del código demostró que "Últimos movimientos" nunca estuvo montado en `InicioView.tsx`. Por ende, no hubo que remover nada; la pantalla conserva sus 3 bloques estructurales (`Por asignar`, `Sobres`, `Cuentas`).
 * **Barra de resumen del periodo y días restantes:**

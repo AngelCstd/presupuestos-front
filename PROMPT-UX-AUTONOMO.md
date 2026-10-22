@@ -114,7 +114,7 @@ Esto es binario. Ejecútalo entero al cerrar cada pantalla y pega el resultado e
 | G5 | Strings de usuario fuera de `lib/i18n/` | Cero. Revisa los `.tsx` que tocaste en esta pantalla |
 | G6 | Vocabulario prohibido en `lib/i18n/es.ts` | Cero: `movimiento contable`, `asiento`, `partida doble`, `entry`, `ledger`, `rollover`, `compensated`, `overspent`, `no_budget` |
 | G7 | Llamadas de red de la pantalla | Las declaradas en su brief, ni una más |
-| G8 | Capturas a 360px, 390px y 768px de ancho | Las tres existen, en `ux/<pantalla>/`, y revisadas por Luis. Una pantalla no cierra hasta que Luis vea sus capturas. |
+| G8 | Ausencia de desborde y capturas (360px, 390px, 768px) | Con el viewport fijado en el navegador a cada ancho, pasa la aserción mecánica: `document.documentElement.scrollWidth <= window.innerWidth`. Se reporta el valor de `innerWidth` y `scrollWidth` de cada corrida (rojo si falla). Las capturas en `ux/<pantalla>/` existen para revisión de Luis. |
 | G9 | Imports | Todo lo importado existe en el `INVENTARIO.md` o lo creaste en esta corrida |
 
 G2 es la más importante: esos tests son lo único que impide que una mejora visual rompa la

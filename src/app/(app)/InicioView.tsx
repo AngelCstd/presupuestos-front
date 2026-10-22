@@ -105,13 +105,24 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
         ? `1${es.inicio.overspentSingleSuffix}`
         : `${count}${es.inicio.overspentCountSuffix}`;
 
+    // ¿Hay fondos disponibles en otros sobres para cubrir?
+    const hasCoveringFunds = dashboard.categories.some(
+      (cat) => cat.status !== 'overspent' && BigInt(cat.availableCents) > 0n,
+    );
+
+    const cardBorder = hasCoveringFunds
+      ? 'border-state-depleted/40 bg-muted-background/60'
+      : 'border-state-overspent/40 bg-muted-background/60';
+    const titleColor = hasCoveringFunds ? 'text-state-depleted' : 'text-state-overspent';
+    const amountColor = hasCoveringFunds ? 'text-foreground' : 'text-state-overspent';
+
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-state-overspent/40 bg-muted-background/60 p-5 shadow-sm min-w-0">
+      <div className={`flex flex-col gap-3 rounded-xl border p-5 shadow-sm min-w-0 ${cardBorder}`}>
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium text-state-overspent uppercase tracking-wider">
+          <p className={`text-xs font-semibold uppercase tracking-wider ${titleColor}`}>
             {es.inicio.overspentHeroTitle}
           </p>
-          <p className="text-3xl font-semibold text-state-overspent">
+          <p className={`text-hero font-bold tracking-tight ${amountColor}`}>
             <Money cents={overspentDeficit.toString()} />
           </p>
           <p className="text-xs text-muted">{overspentLabel}</p>
@@ -134,10 +145,10 @@ function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
     return (
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/60 p-5 shadow-sm min-w-0">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium text-muted uppercase tracking-wider">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             {es.field.unassignedCents}
           </p>
-          <p className="text-3xl font-semibold text-foreground">
+          <p className="text-hero font-bold tracking-tight text-foreground">
             <Money cents={dashboard.unassignedCents} />
           </p>
           <p className="text-xs text-muted">{es.inicio.readyToAssign}</p>
@@ -266,7 +277,7 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
   return (
     <div className="flex flex-col gap-3 min-w-0">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-foreground">{es.inicio.envelopesTitle}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">{es.inicio.envelopesTitle}</p>
         <Link href="/sobres" className="text-xs font-medium text-primary underline">
           {es.inicio.assignAction}
         </Link>
@@ -324,7 +335,7 @@ function AccountsBlock({ dashboard }: { dashboard: DashboardResponse }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/30 p-4 shadow-sm min-w-0">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-foreground shrink-0">{es.inicio.accountsTitle}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted shrink-0">{es.inicio.accountsTitle}</p>
         <Link href="/cuentas" className="text-xs font-medium text-primary underline shrink-0">
           {es.inicio.viewPending}
         </Link>

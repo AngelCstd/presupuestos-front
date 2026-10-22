@@ -84,6 +84,8 @@
   --font-size-xl: 1.25rem;    /* 20px */
   --font-size-2xl: 1.5rem;    /* 24px */
   --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-hero: 2.5rem;   /* 40px */
 
   /*
    * Radios de borde con curvatura generosa según dirección visual
