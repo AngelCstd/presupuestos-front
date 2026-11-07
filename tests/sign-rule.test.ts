@@ -14,6 +14,10 @@ describe('formatBalance — la regla de signo depende exclusivamente del kind', 
     expect(formatBalance('50000', 'receivable')).toEqual({ amount: '$500.00', suffix: 'te deben' });
   });
 
+  it('receivable en cero: sin sufijo "te deben"', () => {
+    expect(formatBalance('0', 'receivable')).toEqual({ amount: '$0.00', suffix: null });
+  });
+
   it('category: tal cual, sin sufijo', () => {
     expect(formatBalance('125000', 'category')).toEqual({ amount: '$1,250.00', suffix: null });
   });

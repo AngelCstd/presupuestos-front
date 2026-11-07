@@ -32,9 +32,14 @@ export function CreateIncomeSourceForm({ open, onClose }: { open: boolean; onClo
           <Input value={name} onChange={(event) => setName(event.target.value)} required />
         </Field>
 
-        <Button type="submit" loading={createIncomeSource.isPending}>
-          Crear
-        </Button>
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={createIncomeSource.isPending}>
+            Crear
+          </Button>
+        </div>
       </form>
     </Sheet>
   );

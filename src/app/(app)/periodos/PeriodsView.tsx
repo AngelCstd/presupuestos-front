@@ -36,17 +36,27 @@ function PeriodRow({ period, canOfferClose }: { period: Period; canOfferClose: b
 
   return (
     <div className="flex items-center justify-between rounded-md border border-border p-3">
-      <div className="flex flex-col gap-1">
-        <span className="text-foreground">
-          {period.startsOn} – {period.endsOn}
+      <Link
+        href={`/movimientos?from=${period.startsOn}&to=${period.endsOn}`}
+        className="flex items-center justify-between gap-3 min-w-0 flex-1 active:scale-95 transition-transform pr-2"
+      >
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="text-foreground font-medium truncate">
+            {period.startsOn} – {period.endsOn}
+          </span>
+          <div>
+            <Badge tone={period.status === 'open' ? 'neutral' : 'success'}>{es.periodStatus[period.status]}</Badge>
+          </div>
+          {deleteError ? (
+            <p role="alert" className="text-sm text-danger">
+              {errorMessageFor(deleteError)}
+            </p>
+          ) : null}
+        </div>
+        <span aria-hidden="true" className="text-muted shrink-0">
+          ›
         </span>
-        <Badge tone={period.status === 'open' ? 'neutral' : 'success'}>{es.periodStatus[period.status]}</Badge>
-        {deleteError ? (
-          <p role="alert" className="text-sm text-danger">
-            {errorMessageFor(deleteError)}
-          </p>
-        ) : null}
-      </div>
+      </Link>
       <div className="flex items-center gap-2">
         {canOfferClose ? (
           <Link href={`/periodos/${period.id}/cerrar`}>

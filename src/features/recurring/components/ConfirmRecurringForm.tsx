@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { AmountInput } from '@/components/money/AmountInput';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
@@ -13,6 +13,7 @@ import { useConfirmRecurringTemplate } from '@/features/recurring/hooks/useConfi
 import { ApiError } from '@/lib/api/errors';
 import { todayInTimeZone } from '@/lib/domain/dates';
 import { errorMessageFor } from '@/lib/i18n/errors';
+import { es } from '@/lib/i18n/es';
 import { useTimezone } from '@/providers/TimezoneProvider';
 import type { CalendarDate, ConfirmRecurringResult, RecurringTemplate } from '@/types/api';
 
@@ -52,6 +53,10 @@ export function ConfirmRecurringForm({
   }, [draft, hydrated]);
 
   const { data: accounts } = useAccounts();
+  const sortedAccounts = useMemo(
+    () => [...(accounts?.data ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    [accounts?.data],
+  );
   const confirmTemplate = useConfirmRecurringTemplate(template.id);
   const [result, setResult] = useState<ConfirmRecurringResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +121,12 @@ export function ConfirmRecurringForm({
           <AmountInput value={values.amountCents} onChange={(cents) => setField('amountCents', cents)} required />
         </Field>
 
+        <Field label={es.recordatoriosView.targetEnvelope}>
+          <div className="w-full rounded-md border border-border bg-muted-background/50 px-3 py-2 text-sm font-medium text-foreground">
+            {template.categoryName}
+          </div>
+        </Field>
+
         <Field label="Cuenta de pago">
           <select
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
@@ -126,7 +137,7 @@ export function ConfirmRecurringForm({
             <option value="" disabled>
               Elige una
             </option>
-            {accounts?.data.map((account) => (
+            {sortedAccounts.map((account) => (
               <option key={account.id} value={account.id}>
                 {account.name}
               </option>
@@ -149,9 +160,14 @@ export function ConfirmRecurringForm({
           </p>
         ) : null}
 
-        <Button type="submit" loading={confirmTemplate.isPending} disabled={!hydrated}>
-          Confirmar
-        </Button>
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Button type="button" variant="secondary" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={confirmTemplate.isPending} disabled={!hydrated}>
+            Confirmar
+          </Button>
+        </div>
       </form>
     </Sheet>
   );

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { TabBar } from '@/components/layout/TabBar';
+import { Toast } from '@/components/ui/Toast';
 import { listAccounts } from '@/features/accounts/services/accounts';
 
 /**
@@ -15,8 +16,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="pb-28">
+    <div className="pb-36">
       {children}
+      <Toast />
       <TabBar />
     </div>
   );

@@ -71,6 +71,10 @@
   ```typescript
   export function Spinner({ className }: { className?: string });
   ```
+* **`Toast`** (`src/components/ui/Toast.tsx`)
+  ```typescript
+  export function Toast(): JSX.Element | null; // Notificación efímera conectada a useToastStore
+  ```
 
 ### `src/components/layout/`
 

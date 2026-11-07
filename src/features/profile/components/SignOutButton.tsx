@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
 
+import { es } from '@/lib/i18n/es';
+
 /**
  * `supabase.auth.signOut()` + redirige a /login. SCREENS-front.md ya lista "Cerrar
  * sesión" dentro de /mas (U23); esta pieza se adelantó fuera de orden porque sin ella
@@ -24,8 +26,8 @@ export function SignOutButton() {
   }
 
   return (
-    <Button variant="secondary" loading={loading} onClick={handleSignOut}>
-      Cerrar sesión
+    <Button variant="secondary" loading={loading} onClick={handleSignOut} className="w-full text-danger border-border hover:bg-danger/10">
+      {es.masView.signOutAction}
     </Button>
   );
 }

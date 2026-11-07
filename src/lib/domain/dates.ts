@@ -24,6 +24,29 @@ export function formatInstant(iso: string, timeZone: string): string {
 }
 
 /**
+ * Formatea una fecha de calendario pura (YYYY-MM-DD, e.g. bookedAt, nextDueOn)
+ * a formato legible en español sin desfases por huso horario:
+ * "2026-10-23" -> "23 oct 2026".
+ */
+export function formatCalendarDate(dateString: string | null | undefined): string {
+  if (!dateString || typeof dateString !== 'string') return '';
+  const parts = dateString.split('-');
+  if (parts.length !== 3) return dateString;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) return dateString;
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return new Intl.DateTimeFormat('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
+/**
  * Agregada en U18 (2026-08-17): ya estaba nombrada en el árbol original de
  * ARCHITECTURE-front.md §8 ("dates.ts todayInTimeZone, formatInstant,
  * isDateInClosedPeriod") pero TASK-front.md §6.1 nunca la fijó, así que la sesión de

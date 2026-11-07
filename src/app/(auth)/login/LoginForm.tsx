@@ -77,6 +77,18 @@ export function LoginForm() {
       <Button type="submit" loading={loading}>
         Entrar
       </Button>
+
+      {process.env.NODE_ENV !== 'production' && (
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = '/api/bff/dev-login';
+          }}
+          className="text-center rounded-lg border border-border bg-muted-background/40 py-2.5 text-xs font-medium text-foreground hover:bg-muted-background transition-colors"
+        >
+          Entrar como Luis (Desarrollo local)
+        </button>
+      )}
     </form>
   );
 }

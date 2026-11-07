@@ -81,7 +81,10 @@ export function formatBalance(
     case 'credit':
       return { amount: formatMoney(absCentsString(cents)), suffix: 'debes' };
     case 'receivable':
-      return { amount: formatMoney(cents), suffix: 'te deben' };
+      return {
+        amount: formatMoney(cents),
+        suffix: BigInt(cents) === 0n ? null : 'te deben',
+      };
     case 'income_source':
       return { amount: formatMoney(absCentsString(cents)), suffix: null };
     case 'cash':

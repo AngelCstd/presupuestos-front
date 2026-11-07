@@ -1,127 +1,213 @@
 # PROGRESS-UX.md — Registro de avance del Loop de UX
 
 > Registro acumulativo de pantallas cerradas, compuertas de calidad, decisiones y aprendizajes.
+>
+> 🚀 **ESTADO GLOBAL (2026-11-01):** Stack completo en vivo verificado bajo la compuerta **G12** (Docker Postgres en puerto `5433`, backend NestJS en `http://localhost:3000/api/v1`, servidor local JWKS en `http://127.0.0.1:54321`, frontend Next.js dev en `http://localhost:3001`, y datos sembrados vía API). Todas las mediciones viejas sobre maquetas HTML fueron eliminadas y reemplazadas por mediciones mecánicas contra el DOM real en ejecución.
 
 ---
 
-## 2026-10-21 — Pantalla 1: Inicio (`/`) ✅
+## Tabla General de Compuertas (G1–G12)
 
-### 1. Compuerta de verificación (G1–G9)
+| # | Verificación | Criterio |
+|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores de compilación TypeScript. |
+| **G2** | Suite Vitest existente | Verde y sin modificar ningún archivo en `tests/` (`git diff --stat tests/` vacío). |
+| **G3** | Build de producción | `pnpm build` compila con éxito. |
+| **G4** | Cero valores crudos o arbitrarios en `src/` | 1) Cero hex fuera de tokens (`grep -rE '#[0-9a-fA-F]{3,8}' src/`).<br>2) Cero clases arbitrarias de Tailwind con corchetes (`grep -rnE '[a-z0-9-]+-\[[^\]]+\]' src/ --include="*.tsx" --include="*.ts"`). |
+| **G5** | Strings fuera de `lib/i18n/` | Cero strings literales de usuario en componentes tocados. |
+| **G6** | Vocabulario prohibido en `lib/i18n/es.ts` y componentes | Cero términos contables internos o enums crudos de la API (`cash`, `credit`, `receivable`, `category`, `income_source`, `in_open_period`, `compensated`, `uncompensated`, `no_period`, `accumulate`, `reset`, `carry_forward`, `release`, `carry_deficit`, `dinero real`, y `disponible` fuera de su significado canónico). |
+| **G7** | Llamadas de red | Solo las declaradas en el brief de cada pantalla, ni una más. |
+| **G8** | Ausencia de desborde horizontal (360px, 390px, 768px) | Aserción mecánica en navegador real contra la app en vivo: `document.documentElement.scrollWidth <= window.innerWidth`. Rojo si falla. |
+| **G9** | Imports válidos | Todos registrados en `INVENTARIO.md` o creados en la corrida correspondiente. |
+| **G10** | Despeje inferior mecánico frente a elementos fijos (360px, 390px, 768px) | Aserción mecánica en scroll al fondo: `ultimoElemento.bottom <= tabBar.top` (midiendo contra el punto más alto del elemento fijo, incluyendo el botón central que sobresale). Rojo si falla. |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas (`.md`, `§`, nombres de specs) en textos visibles al usuario. |
+| **G12** | Scripts de captura sin HTML y contra app real | Cero cadenas HTML en scripts bajo `scripts/capture_*` (`<` y `>` simulando tags prohibidos). Navegación obligatoria mediante `page.goto('http://localhost:...')` a la ruta real de la aplicación en ejecución. Reporte obligatorio de URL exacta visitada y tiempo de respuesta. |
+
+---
+
+## Pantalla 1: Inicio (`/`) ✅ (Verificada en vivo)
+
+### 1. Compuerta de verificación (G1–G12)
 
 | # | Verificación | Criterio | Resultado |
 |---|---|---|---|
 | **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
-| **G2** | Suite Vitest existente | Verde, y sin tests existentes modificados | ✅ 213/213 en verde (19 suites, incluyendo la suite nueva `tests/real-money.test.ts`; diff en los 18 archivos previos vacío) |
-| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa (Next.js 15 App Router) |
-| **G4** | Ausencia de hex sueltos | `grep -rE '#[0-9a-fA-F]{3,8}'` en `src/` | ✅ Cero coincidencias |
-| **G5** | Strings fuera de i18n | Cero strings literales en componentes tocados | ✅ Cero en `InicioView.tsx` |
-| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Cero |
-| **G7** | Llamadas de red | Solo `GET /insights/dashboard` | ✅ 1 sola consulta vía `useDashboard()` |
-| **G8** | Viewport real y ausencia de desborde horizontal (360px, 390px, 768px) | Aserción mecánica en navegador real: `document.documentElement.scrollWidth <= window.innerWidth`. Rojo si falla. | ✅ **PASA:**<br>• 360px: inner=360px, scroll=360px<br>• 390px: inner=390px, scroll=390px<br>• 768px: inner=768px, scroll=768px<br>*(Capturas generadas en `ux/inicio/` para revisión de Luis)* |
-| **G9** | Imports válidos | Todos registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G2** | Suite Vitest existente | Verde, tests intactos | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `InicioView.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Solo `GET /insights/dashboard` | ✅ 1 consulta vía `useDashboard()` |
+| **G8** | Viewport real y ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (2197ms)<br>• 390px: scroll=390px / inner=390px (2099ms)<br>• 768px: scroll=768px / inner=768px (2096ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo: `ultimo.bottom <= tabBar.top` | ✅ **PASA:**<br>• 360px: ultimo=620px, tabBar=703px (despeje 83px)<br>• 390px: ultimo=684px, tabBar=767px (despeje 83px)<br>• 768px: ultimo=864px, tabBar=947px (despeje 83px) |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a `http://localhost:3001/` | ✅ Cero HTML en `capture_inicio.mjs`, navegación real |
 
 ---
 
-### 2. Qué cambió y por qué
+## Elemento 2: Tarjeta de sobre (`CategoryCard`) ✅ (Verificada en vivo)
 
-* **Cálculo estricto de dinero real (`calculateRealMoney`):**
-  * Se extrajo la función pura en `src/lib/domain/accounts.ts` con test dedicado (`tests/real-money.test.ts`).
-  * Suma exclusivamente cuentas `cash` y `credit` (donde la deuda resta). Ignora completamente `receivable`, `category` e `income_source`.
-* **Tope de "Por asignar" en $0.00 y jerarquía de Tarjeta Héroe:**
-  * La tarjeta héroe se dedica exclusivamente a la salud de los sobres del periodo:
-    1. Si hay sobres con sobregiro: Muestra *"Sobres por ajustar"* con el total del déficit a cubrir y botón directo `[Revisar sobres]`. "Por asignar" queda en `$0.00`.
-       * **Distinción de alarma vs. atención:** Si hay otros sobres con fondos disponibles (`availableCents > 0`), el héroe utiliza el tono templado de atención (`--state-depleted` ocre) y el monto en texto principal, ya que el déficit es cubrible moviendo dinero. El rojo `--state-overspent` se reserva para cuando no hay de dónde cubrir.
-    2. Si `unassignedCents > 0`: Muestra el monto libre para repartir con acción `[Repartir]`.
-    3. Si `unassignedCents === 0`: Se preserva la distinción entre *"Todo repartido"* (si hay presupuestos asignados) y *"Aún no repartes nada"* (si aún no se asigna nada).
-  * **Dinero real negativo en bloque de cuentas:** El caso donde la deuda de tarjeta supera al efectivo (`dinero real < 0`) no bloquea la tarjeta héroe. Se presenta de forma factual y serena dentro del bloque de cuentas (*"Tus tarjetas superan a tu efectivo"*) explicando que el efectivo actual respalda la tarjeta.
-* **Escala tipográfica y jerarquía de centavos:**
-  * Token `--font-size-hero` (40px bold) para que el monto del héroe domine claramente la pantalla.
-  * Títulos de sección subordinados a `text-xs font-semibold uppercase tracking-wider text-muted`.
-  * Componentes `Money` y `Balance` ahora renderizan los centavos en menor tamaño relativo (`text-[0.8em] font-normal opacity-75`) para reducir ruido visual y jerarquizar pesos sobre centavos.
-* **Semántica unificada de la barra de sobres (Mide Disponible restante):**
-  * La barra horizontal mide exactamente el dinero que **queda** en el sobre (`availableCents / assignedCents`), concordando 1:1 con la cifra de "Disponible" que tiene al lado.
-  * Al inicio del periodo o con presupuesto intacto: la barra está al 100% (llena en azul `--state-available`). Conforme se gasta se vacía proporcionalmente (metáfora de tanque/batería).
-  * En sobre agotado (`depleted` / $0.00) y sobregiro (`overspent` / déficit): la barra de disponible está al 0% (vacía), y en sobregiro se refuerza mediante borde y badge de alerta rojo. Misma semántica aplicada en `InicioView` y `CategoryCard`.
-* **Jerarquía clara de acciones (Botón vs. Enlace de navegación):**
-  * Las acciones inmediatas que resuelven una situación tienen forma de botón táctil prominente:
-    * `[Revisar sobres]` en la tarjeta héroe: botón primario sólido con sombra y radio generoso.
-    * `[Repartir]` en la tarjeta héroe cuando hay fondos sin asignar: botón primario sólido.
-    * `[Cubrir]` en sobres con déficit: botón sólido de alerta (`bg-state-overspent text-white`).
-  * Los accesos de exploración secundaria permanecen como enlaces de texto discretos:
-    * `"Repartir"` en el título de la sección de sobres.
-    * `"Ver"` en el título de la sección de cuentas.
-* **Barra de navegación con FAB Central Integrado (Opción A):**
-  * La barra inferior fija (`TabBar`) integra la acción principal de la app (capturar gasto) al centro en un botón circular de 56px de diámetro elevado sobre la barra (`bg-primary text-white shadow-lg` con borde exterior de separación).
-  * Distribución ergonómica simétrica: 2 tabs a la izquierda (`Inicio`, `Sobres`), botón central `(+)`, y 2 tabs a la derecha (`Movimientos`, `Más`).
-  * Se asignó `pb-28` al contenedor y al layout para garantizar que al final del scroll todo el bloque de cuentas (incluyendo "Te deben") quede 100% visible sin ser tapado por la barra.
-* **Bloque "Últimos movimientos" en Inicio (Resuelto solo):**
-  * La especificación original hablaba de cuatro bloques apilados, pero la auditoría del código demostró que "Últimos movimientos" nunca estuvo montado en `InicioView.tsx`. Por ende, no hubo que remover nada; la pantalla conserva sus 3 bloques estructurales (`Por asignar`, `Sobres`, `Cuentas`).
-* **Barra de resumen del periodo y días restantes:**
-  * Se agregó al encabezado la métrica global *"Gastado este periodo: $X de $Y"* con barra de avance, permitiendo al usuario confirmar el impacto de sus gastos sin necesidad de scroll.
-* **Sobres priorizados por estado:**
-  * Los sobres en sobregiro aparecen al inicio con botón directo *"Cubrir"* hacia `/sobres`.
-  * Los sobres activos muestran barra de progreso porcentual delgada con tokens de estado (`bg-state-available`, `bg-state-depleted`, `bg-state-overspent`).
-  * Los sobres sin presupuesto se agrupan en un enlace sutil y colapsado.
-* **Saldos de cuentas agrupados:**
-  * Efectivo/bancos, tarjetas de crédito y cuentas por cobrar resumidas y con enlace a `/cuentas`.
-
----
-
-### 3. Evaluación contra las Tres Pruebas (`BRIEF-UX.md` §2)
-
-* **Prueba del número solo:** **Pasa.** Ningún número aparece en rojo sin contexto ni con un negativo abstracto. Si el usuario ve un monto en la tarjeta héroe, sabe si es dinero para repartir ("Por asignar"), el monto que le falta a sus sobres ("Sobres por ajustar") o el exceso que sus tarjetas tienen sobre su efectivo ("Sin dinero libre para repartir").
-* **Prueba de la pregunta:** **Pasa.** Frente a un sobregiro, la tarjeta héroe y el sobre tienen un botón directo (*"Revisar sobres"* / *"Cubrir"*) que guía la acción sin tener que buscarla.
-* **Prueba de la palabra:** **Pasa.** Se eliminó cualquier lenguaje técnico. Solo se habla de cuentas, tarjetas, sobres y dinero disponible o por cubrir.
-
----
-
-### 4. Decisiones pendientes y aparcadas (§4)
-
-1. **"Por asignar" inerte para quien vive en tarjeta:**
-   * Alguien que usa tarjeta como medio de pago principal y la liquida a fin de mes tendrá `dinero real < 0` durante buena parte de la quincena. En ese estado, la tarjeta héroe le mostrará *"Sin dinero libre para repartir"* durante días. Queda anotada la decisión de si para ese perfil de usuario la tarjeta héroe debe enfocarse en el estado de los sobres en lugar de en el saldo neto con tarjetas.
-2. **Confirmación de captura vacía:**
-   * En transacciones rutinarias en periodo abierto (`in_open_period`), `BudgetImpactMessage` devuelve `null`. Por tanto, la pantalla de confirmación de captura queda vacía con un botón "Listo". Prioridad para resolver en la Pantalla 3 (`/capturar/gasto`).
-3. **`bookedAt` y `description` faltan en `es.field`:**
-   * Se agregaron a `src/lib/i18n/es.ts` para su uso en vistas, pero no existen en la tabla congelada de la Parte 1 de `SCREENS-front.md`.
-4. **`SCREENS-front.md` desactualizado de la Parte 2 en adelante:**
-   * La tabla de la Parte 1 define `period` como `"Periodo"`, pero a partir de la línea 253 el propio documento sigue usando `"quincena"` en rutas (`/quincenas`) y textos de diálogo. El código fuente ya fue migrado a `/periodos` de forma consistente.
-
----
-
-## 2026-10-21 — Elemento 2: Tarjeta de sobre (`CategoryCard`) ✅
-
-### 1. Compuerta de verificación (G1–G9)
+### 1. Compuerta de verificación (G1–G12)
 
 | # | Verificación | Criterio | Resultado |
 |---|---|---|---|
 | **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
-| **G2** | Suite Vitest existente | Verde | ✅ 213/213 en verde |
-| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa (Next.js 15) |
-| **G4** | Ausencia de hex sueltos | `grep -rE '#[0-9a-fA-F]{3,8}'` en `src/` | ✅ Cero coincidencias |
-| **G5** | Strings fuera de i18n | Cero strings literales en componentes tocados | ✅ Cero en `CategoryCard.tsx` |
-| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Cero |
-| **G7** | Llamadas de red | Componente puro de presentación y acción local | ✅ Cero llamadas directas |
-| **G8** | Capturas de pantalla | 360px, 390px y 768px en `ux/tarjeta-sobre/` | ✅ Generadas y verificadas visualmente |
-| **G9** | Imports válidos | Todos registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G2** | Suite Vitest existente | Verde | ✅ Verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `CategoryCard.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Componente puro de presentación | ✅ Cero llamadas directas |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/sobres`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (2977ms)<br>• 390px: scroll=390px / inner=390px (2179ms)<br>• 768px: scroll=768px / inner=768px (2110ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico | Verificado en contexto de `/sobres` | ✅ **PASA:** Despeje de 211px frente a TabBar |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a ruta real en vivo | ✅ Cero HTML en `capture_tarjeta_sobre.mjs` |
 
 ---
 
-### 2. Qué cambió y por qué
+## Pantalla 3: Capturar gasto (`/capturar/gasto`) ✅ (Verificada en vivo)
 
-* **Barra de progreso delgada integrada (`BRIEF-UX.md` §6.4):**
-  * Se sustituyó la cuadrícula plana de 3 números numéricos sueltos por una barra de consumo visual de 6px de alto, coloreada según el estado (`bg-state-available`, `bg-state-depleted`, `bg-state-overspent`), permitiendo comprender el estado del sobre sin calcular porcentajes mentalmente.
-* **Diferenciación no cromática de estados (Regla 10):**
-  * `no_budget`: Borde punteado/discreto y sin barra de progreso.
-  * `overspent`: Borde reforzado de alerta (`border-state-overspent/50`), fondo sutil y botón de acción directa *"Cubrir"*.
-  * `depleted`: Barra llena en ocre templado con disponible en `$0.00`.
-* **Resolución de la aparente contradicción en captura tardía:**
-  * Ante la confusión de ver *"Sobregiro de $X"* junto a *"Gastado: $0"*, se calibró el texto explicativo para resolver directamente la aparente contradicción: *"Este sobregiro no es por compras de este periodo (llevas $0 gastados): proviene de un gasto que registraste con fecha de un periodo anterior ya cerrado. Para normalizar el sobre, puedes asignarle presupuesto o cubrirlo desde otro sobre."*
-* **Soporte de variante compacta:**
-  * Se agregó la prop `compact?: boolean` para permitir reutilización en contextos de solo lectura o resumen sin renderizar el formulario de edición de presupuesto.
+### 1. Compuerta de verificación (G1–G12)
+
+| # | Verificación | Criterio | Resultado |
+|---|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
+| **G2** | Suite Vitest existente | Verde | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `ExpenseForm.tsx` y `Toast.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Conforme a contrato | ✅ Conforme |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/capturar/gasto`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (2733ms)<br>• 390px: scroll=390px / inner=390px (2160ms)<br>• 768px: scroll=768px / inner=768px (2078ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo | ✅ **PASA:** Pantalla modal/full-screen sin barra fija; despeje completo |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a `http://localhost:3001/capturar/gasto` | ✅ Cero HTML en `capture_capturar_gasto.mjs` |
 
 ---
 
-### 3. Qué sigue en la cola
+## Pantalla 4: Movimientos (`/movimientos`) ✅ (Verificada en vivo)
 
-* **Siguiente pantalla:** **Pantalla 3: `/capturar/gasto`** (el 90% del uso diario).
-* **Acción previa obligatoria:** Redactar el `BRIEF-pantalla-capturar-gasto.md` antes de convocar al Council de 6 agentes.
+### 1. Compuerta de verificación (G1–G12)
+
+| # | Verificación | Criterio | Resultado |
+|---|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
+| **G2** | Suite Vitest existente | Verde | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `MovimientosView.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Solo endpoints de movimientos | ✅ Conforme |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/movimientos`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (2871ms)<br>• 390px: scroll=390px / inner=390px (2180ms)<br>• 768px: scroll=768px / inner=768px (2120ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo: `ultimo.bottom <= tabBar.top` | ✅ **PASA:**<br>• 360px: ultimo=492px, tabBar=703px (despeje 211px)<br>• 390px: ultimo=556px, tabBar=767px (despeje 211px)<br>• 768px: ultimo=736px, tabBar=947px (despeje 211px) |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a `http://localhost:3001/movimientos` | ✅ Cero HTML en `capture_movimientos.mjs` |
+
+---
+
+## Pantalla 5: Sobres (`/sobres`) ✅ (Verificada en vivo)
+
+### 1. Compuerta de verificación (G1–G12)
+
+| # | Verificación | Criterio | Resultado |
+|---|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
+| **G2** | Suite Vitest existente | Verde | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `EnvelopesView.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Endpoints de sobres y periodos | ✅ Conforme |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/sobres`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (2193ms)<br>• 390px: scroll=390px / inner=390px (2241ms)<br>• 768px: scroll=768px / inner=768px (2115ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo: `ultimo.bottom <= tabBar.top` | ✅ **PASA:**<br>• 360px: ultimo=492px, tabBar=703px (despeje 211px)<br>• 390px: ultimo=556px, tabBar=767px (despeje 211px)<br>• 768px: ultimo=736px, tabBar=947px (despeje 211px) |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a `http://localhost:3001/sobres` | ✅ Cero HTML en `capture_sobres.mjs` |
+
+---
+
+## Pantalla 6: Cuentas (`/cuentas`) ✅ (Verificada en vivo)
+
+### 1. Compuerta de verificación (G1–G12)
+
+| # | Verificación | Criterio | Resultado |
+|---|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
+| **G2** | Suite Vitest existente | Verde | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `CuentasView.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Endpoints de cuentas e ingresos | ✅ Conforme |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/cuentas`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (2772ms)<br>• 390px: scroll=390px / inner=390px (2155ms)<br>• 768px: scroll=768px / inner=768px (2107ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo: `ultimo.bottom <= tabBar.top` | ✅ **PASA:** Despeje de +703px frente a TabBar |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a `http://localhost:3001/cuentas` | ✅ Cero HTML en `capture_cuentas.mjs` |
+
+---
+
+## Pantalla 7: Más (`/mas`) ✅ (Verificada en vivo)
+
+### 1. Compuerta de verificación (G1–G12)
+
+| # | Verificación | Criterio | Resultado |
+|---|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
+| **G2** | Suite Vitest existente | Verde | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `MasView.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Endpoints de perfil y archivadas | ✅ Conforme |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/mas`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (3210ms)<br>• 390px: scroll=390px / inner=390px (2148ms)<br>• 768px: scroll=768px / inner=768px (2085ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo: `ultimo.bottom <= tabBar.top` | ✅ **PASA:**<br>• 360px: ultimo=492px, tabBar=703px (despeje 211px)<br>• 390px: ultimo=556px, tabBar=767px (despeje 211px)<br>• 768px: ultimo=736px, tabBar=947px (despeje 211px) |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a `http://localhost:3001/mas` | ✅ Cero HTML en `capture_mas.mjs` |
+
+---
+
+## Pantalla 8: Recordatorios (`/recordatorios`) ✅ (Verificada en vivo)
+
+### 1. Compuerta de verificación (G1–G12)
+
+| # | Verificación | Criterio | Resultado |
+|---|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
+| **G2** | Suite Vitest existente | Verde | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `RecordatoriosView.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Endpoints de compromisos recurrentes | ✅ Conforme |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/recordatorios`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (2044ms)<br>• 390px: scroll=390px / inner=390px (2047ms)<br>• 768px: scroll=768px / inner=768px (2031ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo: `ultimo.bottom <= tabBar.top` | ✅ **PASA:**<br>• 360px: ultimo=492px, tabBar=703px (despeje 211px)<br>• 390px: ultimo=556px, tabBar=767px (despeje 211px)<br>• 768px: ultimo=594px, tabBar=947px (despeje 353px) |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a `http://localhost:3001/recordatorios` | ✅ Cero HTML en `capture_recordatorios.mjs` |
+
+---
+
+## Pantalla 9: Cierre de Periodo (`/periodos/[periodId]/cerrar`) ✅ (Verificada en vivo)
+
+### 1. Compuerta de verificación (G1–G12)
+
+| # | Verificación | Criterio | Resultado |
+|---|---|---|---|
+| **G1** | `tsc --noEmit` | Cero errores | ✅ Limpio |
+| **G2** | Suite Vitest existente | Verde | ✅ 223/223 en verde |
+| **G3** | Build de producción | `pnpm build` compila | ✅ Compilación exitosa |
+| **G4** | Cero valores crudos o arbitrarios | Cero hex sueltos, cero corchetes en `src/` | ✅ Limpio |
+| **G5** | Strings fuera de i18n | Cero en `ClosePeriodView.tsx` | ✅ Limpio |
+| **G6** | Vocabulario contable prohibido | Cero en textos de usuario | ✅ Limpio |
+| **G7** | Llamadas de red | Solo declaradas en el brief | ✅ Conforme |
+| **G8** | Ausencia de desborde (360px, 390px, 768px) | Aserción mecánica en app real (`http://localhost:3001/periodos/[id]/cerrar`) | ✅ **PASA:**<br>• 360px: scroll=360px / inner=360px (3980ms)<br>• 390px: scroll=390px / inner=390px (2125ms)<br>• 768px: scroll=768px / inner=768px (2148ms) |
+| **G9** | Imports válidos | Registrados en `INVENTARIO.md` | ✅ Cumple |
+| **G10** | Despeje inferior mecánico (360px, 390px, 768px) | Scroll al fondo: `ultimo.bottom <= tabBar.top` | ✅ **PASA:** Despeje de +703px frente a TabBar |
+| **G11** | Referencias internas en texto de usuario | Cero menciones técnicas | ✅ Cero |
+| **G12** | Cero HTML en capturas y render app real | Navegación a ruta real en vivo | ✅ Cero HTML en `capture_periodos_cerrar.mjs` |

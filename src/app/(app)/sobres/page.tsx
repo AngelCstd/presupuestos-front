@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { QueryClient, HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { listCategories } from '@/features/envelopes/services/categories';
 import { getCurrentPeriod } from '@/features/periods/services/periods';
@@ -28,7 +29,9 @@ export default async function EnvelopesPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <EnvelopesView periodId={periodId} />
+      <Suspense>
+        <EnvelopesView periodId={periodId} />
+      </Suspense>
     </HydrationBoundary>
   );
 }

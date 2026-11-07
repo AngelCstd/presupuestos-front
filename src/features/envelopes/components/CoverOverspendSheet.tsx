@@ -28,7 +28,7 @@ export function CoverOverspendSheet({
   onCover,
   moving,
 }: CoverOverspendSheetProps) {
-  if (!target?.period) return null;
+  if (!target?.period || BigInt(target.period.availableCents) >= 0n) return null;
 
   const deficit = -BigInt(target.period.availableCents);
   const sources = categories
@@ -62,6 +62,12 @@ export function CoverOverspendSheet({
           })}
         </ul>
       )}
+
+      <div className="mt-4 flex justify-end border-t border-border/40 pt-3">
+        <Button type="button" variant="secondary" onClick={onClose}>
+          Cancelar
+        </Button>
+      </div>
     </Sheet>
   );
 }

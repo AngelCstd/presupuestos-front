@@ -80,4 +80,7 @@
   1. Barra de consumo proporcional con tokens accesibles.
   2. Estado `overspent` y `no_budget` diferenciados por borde y estructura, no solo por color.
   3. Redacción clara y con concordancia corregida para el sobregiro por fecha de periodo cerrado.
+* **Regla vinculante del campo de asignación:**
+  * El campo trae el asignado actual del sobre (`period.assignedCents`), **salvo cuando es negativo** (ajuste automático por captura tardía), donde **trae `0` (`0.00`)**.
+  * *Justificación:* Evita presentar un presupuesto negativo en un campo editable y, al guardar `0`, envía el delta positivo que normaliza el sobre a `$0.00` disponible.
 * **Confianza:** **Alta.** El componente queda listo para su integración tanto en `/sobres` como en Inicio.

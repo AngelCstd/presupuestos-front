@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, type ReactNode } from 'react';
 import { AmountInput } from '@/components/money/AmountInput';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, type EmptyStateTone } from '@/components/states/EmptyState';
@@ -75,6 +75,15 @@ export function SimpleTransactionForm({
   const { draft, update, clear } = useDraft<SimpleTransactionFormValues>(draftIntent, initialValues);
   const [values, setValues] = useState(initialValues);
   const [hydrated, setHydrated] = useState(false);
+
+  const sortedFirstOptions = useMemo(
+    () => [...(firstOptions ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    [firstOptions],
+  );
+  const sortedSecondOptions = useMemo(
+    () => [...(secondOptions ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    [secondOptions],
+  );
 
   const mutation = useCreateTransaction(intent);
   const [result, setResult] = useState<TransactionMutationResult | null>(null);
@@ -158,7 +167,7 @@ export function SimpleTransactionForm({
           <option value="" disabled>
             Elige uno
           </option>
-          {firstOptions?.map((option) => (
+          {sortedFirstOptions.map((option) => (
             <option key={option.id} value={option.id}>
               {option.name}
             </option>
@@ -176,7 +185,7 @@ export function SimpleTransactionForm({
           <option value="" disabled>
             Elige uno
           </option>
-          {secondOptions?.map((option) => (
+          {sortedSecondOptions.map((option) => (
             <option key={option.id} value={option.id}>
               {option.name}
             </option>

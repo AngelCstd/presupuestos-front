@@ -60,9 +60,14 @@ export function CreatePeriodForm({
             {errorMessageFor(formError)}
           </p>
         ) : null}
-        <Button type="submit" loading={createPeriod.isPending}>
-          Crear
-        </Button>
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={createPeriod.isPending}>
+            Crear
+          </Button>
+        </div>
       </form>
     </Sheet>
   );

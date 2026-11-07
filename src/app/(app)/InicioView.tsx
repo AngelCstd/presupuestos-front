@@ -9,6 +9,8 @@ import { EmptyState } from '@/components/states/EmptyState';
 import { ErrorState } from '@/components/states/ErrorState';
 import { Skeleton } from '@/components/states/Skeleton';
 import { EnvelopeStatusBadge } from '@/features/envelopes/components/EnvelopeStatusBadge';
+import { HeroCard } from '@/features/dashboard/components/HeroCard';
+import { UnassignedFundsSheet } from '@/features/dashboard/components/UnassignedFundsSheet';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useTimezone } from '@/providers/TimezoneProvider';
 import { todayInTimeZone } from '@/lib/domain/dates';
@@ -45,150 +47,60 @@ function PeriodHeader({ dashboard }: { dashboard: DashboardResponse }) {
   }
 
   const daysDiff = calculateDaysRemaining(dashboard.period.endsOn, today);
-  let daysLabel: string;
-  if (daysDiff < 0) {
-    daysLabel = es.inicio.periodEnded;
-  } else if (daysDiff === 0) {
-    daysLabel = es.inicio.periodEndsToday;
-  } else {
-    daysLabel = `${daysDiff}${es.inicio.daysRemainingSuffix}`;
-  }
 
   const totalAssigned = dashboard.categories.reduce((acc, cat) => acc + BigInt(cat.assignedCents), 0n);
   const totalSpent = dashboard.categories.reduce((acc, cat) => acc + BigInt(cat.spentCents), 0n);
   const spentPercent =
     totalAssigned > 0n ? Math.min(Number((totalSpent * 100n) / totalAssigned), 100) : 0;
 
+  const startMs = new Date(`${dashboard.period.startsOn}T12:00:00Z`).getTime();
+  const endsMs = new Date(`${dashboard.period.endsOn}T12:00:00Z`).getTime();
+  const currentMs = new Date(`${today}T12:00:00Z`).getTime();
+  const totalDays = Math.max(1, Math.round((endsMs - startMs) / (1000 * 60 * 60 * 24)) + 1);
+  const currentDay = Math.min(
+    totalDays,
+    Math.max(1, Math.round((currentMs - startMs) / (1000 * 60 * 60 * 24)) + 1),
+  );
+
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/40 p-4 shadow-sm min-w-0">
       <div className="flex items-center justify-between gap-2 text-xs text-muted min-w-0">
-        <span className="shrink-0">
+        <span className="shrink-0 font-medium text-foreground">
           {dashboard.period.startsOn} — {dashboard.period.endsOn}
         </span>
-        <span className="font-medium text-foreground truncate">{daysLabel}</span>
+        {daysDiff < 0 ? (
+          <span className="font-medium text-foreground truncate">{es.inicio.periodEnded}</span>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-1.5 min-w-0">
-        <div className="flex items-center justify-between gap-2 text-xs min-w-0">
+        <Link
+          href={`/movimientos?from=${dashboard.period.startsOn}&to=${dashboard.period.endsOn}`}
+          className="flex items-center justify-between gap-2 text-xs min-w-0 rounded p-1 -m-1 transition-colors active:scale-95 text-foreground active:bg-muted-background"
+        >
           <span className="text-muted shrink-0">{es.inicio.periodSpentHeader}</span>
-          <span className="font-medium text-foreground text-right truncate">
-            <Money cents={totalSpent.toString()} />
-            {es.inicio.ofTotal}
-            <Money cents={totalAssigned.toString()} />
-          </span>
-        </div>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-medium text-foreground text-right truncate">
+              <Money cents={totalSpent.toString()} />
+              {es.inicio.ofTotal}
+              <Money cents={totalAssigned.toString()} />
+            </span>
+            <span aria-hidden="true" className="text-muted shrink-0">
+              ›
+            </span>
+          </div>
+        </Link>
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted-background">
           <div
             className="h-full rounded-full bg-primary transition-all duration-300"
             style={{ width: `${spentPercent}%` }}
           />
         </div>
+        <div className="flex items-center justify-between text-2xs text-muted pt-0.5">
+          <span>{es.inicio.paceTracker(currentDay, totalDays, Math.round(spentPercent))}</span>
+        </div>
       </div>
     </div>
-  );
-}
-
-function HeroCard({ dashboard }: { dashboard: DashboardResponse }) {
-  const overspentCategories = dashboard.categories.filter((cat) => cat.status === 'overspent');
-  const overspentDeficit = overspentCategories.reduce((sum, cat) => {
-    const avail = BigInt(cat.availableCents);
-    return avail < 0n ? sum - avail : sum;
-  }, 0n);
-
-  const unassigned = BigInt(dashboard.unassignedCents);
-  const hasAnyBudgeted = dashboard.categories.some((category) => category.hasBudget);
-
-  // Situación 1: Categorías con sobregiro
-  if (overspentCategories.length > 0) {
-    const count = overspentCategories.length;
-    const overspentLabel =
-      count === 1
-        ? `1${es.inicio.overspentSingleSuffix}`
-        : `${count}${es.inicio.overspentCountSuffix}`;
-
-    // ¿Hay fondos disponibles en otros sobres para cubrir?
-    const hasCoveringFunds = dashboard.categories.some(
-      (cat) => cat.status !== 'overspent' && BigInt(cat.availableCents) > 0n,
-    );
-
-    const cardBorder = hasCoveringFunds
-      ? 'border-state-depleted/40 bg-muted-background/60'
-      : 'border-state-overspent/40 bg-muted-background/60';
-    const titleColor = hasCoveringFunds ? 'text-state-depleted' : 'text-state-overspent';
-    const amountColor = hasCoveringFunds ? 'text-foreground' : 'text-state-overspent';
-
-    return (
-      <div className={`flex flex-col gap-3 rounded-xl border p-5 shadow-sm min-w-0 ${cardBorder}`}>
-        <div className="flex flex-col gap-1">
-          <p className={`text-xs font-semibold uppercase tracking-wider ${titleColor}`}>
-            {es.inicio.overspentHeroTitle}
-          </p>
-          <p className={`text-hero font-bold tracking-tight ${amountColor}`}>
-            <Money cents={overspentDeficit.toString()} />
-          </p>
-          <p className="text-xs text-muted">{overspentLabel}</p>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs">
-          <span className="text-muted shrink-0">
-            {es.field.unassignedCents}: <Money cents="0" />
-          </span>
-          <Link
-            href="/sobres"
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:opacity-95 active:scale-95 shrink-0"
-          >
-            {es.inicio.reviewEnvelopes}
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Situación 2: Dinero libre para repartir
-  if (unassigned > 0n) {
-    return (
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted-background/60 p-5 shadow-sm min-w-0">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-            {es.field.unassignedCents}
-          </p>
-          <p className="text-hero font-bold tracking-tight text-foreground">
-            <Money cents={dashboard.unassignedCents} />
-          </p>
-          <p className="text-xs text-muted">{es.inicio.readyToAssign}</p>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs">
-          <span className="text-muted">{es.inicio.readyToAssign}</span>
-          <Link
-            href="/sobres"
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:opacity-95 active:scale-95 shrink-0"
-          >
-            {es.inicio.assignAction}
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Situación 3 y 4: unassigned === 0 (Todo repartido vs. Aún no repartes nada)
-  return hasAnyBudgeted ? (
-    <EmptyState
-      tone="exito"
-      title={es.inicio.allAssignedTitle}
-      description={es.inicio.allAssignedDescription}
-    />
-  ) : (
-    <EmptyState
-      tone="pendiente"
-      title={es.inicio.nothingAssignedTitle}
-      description={es.inicio.nothingAssignedDescription}
-      action={
-        <Link href="/capturar/otro" className="text-sm font-medium text-primary underline">
-          {es.inicio.registerIncome}
-        </Link>
-      }
-    />
   );
 }
 
@@ -199,7 +111,7 @@ function EnvelopeProgressItem({
   category: InsightCategoryBalance;
   hasCoveringFunds?: boolean;
 }) {
-  const { availablePercentage } = calculateEnvelopeProgress({
+  const { availablePercentage, overspentPercentage } = calculateEnvelopeProgress({
     assignedCents: category.assignedCents,
     spentCents: category.spentCents,
     availableCents: category.availableCents,
@@ -207,61 +119,101 @@ function EnvelopeProgressItem({
   });
 
   const isOverspent = category.status === 'overspent';
-  const isDepleted = category.status === 'depleted';
   const hasBudget = category.hasBudget;
-
-  let progressColor = 'bg-state-available';
-  if (isOverspent) progressColor = 'bg-state-overspent';
-  else if (isDepleted) progressColor = 'bg-state-depleted';
+  const isNoBudget = category.status === 'no_budget';
+  const deficit = isOverspent ? -BigInt(category.availableCents) : 0n;
 
   const coverButtonColor = hasCoveringFunds ? 'bg-state-depleted' : 'bg-state-overspent';
 
   return (
-    <li
-      className={`flex flex-col gap-2 rounded-lg border p-3 shadow-sm min-w-0 ${
-        isOverspent
-          ? hasCoveringFunds
-            ? 'border-state-depleted/40 bg-muted-background/30'
-            : 'border-state-overspent/50 bg-muted-background/30'
-          : 'border-border bg-background'
-      }`}
-    >
-      <div className="flex items-center justify-between gap-2 min-w-0">
-        <span className="min-w-0 truncate font-medium text-foreground">{category.name}</span>
-        <div className="flex shrink-0 items-center gap-2">
-          <EnvelopeStatusBadge status={category.status} />
-          {hasBudget ? (
-            <span
-              className={`font-semibold ${
-                isOverspent
-                  ? hasCoveringFunds
-                    ? 'text-state-depleted'
-                    : 'text-state-overspent'
-                  : 'text-foreground'
-              }`}
-            >
-              <Money cents={category.availableCents} />
-            </span>
-          ) : null}
-          {isOverspent ? (
+    <li className="min-w-0">
+      <div
+        className={`flex flex-col gap-2 rounded-lg border p-3 shadow-sm min-w-0 ${
+          isOverspent
+            ? hasCoveringFunds
+              ? 'border-state-depleted/40 bg-muted-background/30'
+              : 'border-state-overspent/50 bg-muted-background/30'
+            : isNoBudget
+            ? 'border-dashed border-border/80 bg-muted-background/10'
+            : 'border-border bg-background'
+        }`}
+      >
+        <Link
+          href={`/sobres/${category.categoryId}`}
+          className="flex flex-col gap-2 min-w-0 active:scale-95 transition-transform"
+        >
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <span className="min-w-0 truncate font-medium text-foreground">{category.name}</span>
+            <div className="flex shrink-0 items-center gap-2">
+              {category.status !== 'available' ? (
+                <EnvelopeStatusBadge status={category.status} />
+              ) : null}
+              <span aria-hidden="true" className="text-muted shrink-0">
+                ›
+              </span>
+            </div>
+          </div>
+
+          {!hasBudget ? (
+            <p className="text-xs text-muted">{es.envelopeCard.noBudgetPrompt}</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted">
+                  {isOverspent ? (
+                    <>
+                      {es.envelopeCard.overspentPrefix}
+                      <span className="font-bold text-state-overspent">
+                        <Money cents={deficit.toString()} />
+                      </span>
+                      {es.envelopeCard.of}
+                      <Money cents={category.assignedCents} />
+                      {es.envelopeCard.assignedSuffix}
+                    </>
+                  ) : (
+                    <>
+                      {es.envelopeCard.remainingPrefix}
+                      <span className="font-bold text-foreground">
+                        <Money cents={category.availableCents} />
+                      </span>
+                      {es.envelopeCard.of}
+                      <Money cents={category.assignedCents} />
+                      {es.envelopeCard.assignedSuffix}
+                    </>
+                  )}
+                </span>
+              </div>
+
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">
+                {isOverspent ? (
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      hasCoveringFunds ? 'progress-deficit-coverable' : 'progress-deficit-danger'
+                    }`}
+                    style={{ width: `${overspentPercentage}%` }}
+                  />
+                ) : (
+                  <div
+                    className="h-full rounded-full bg-state-available transition-all duration-300"
+                    style={{ width: `${availablePercentage}%` }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </Link>
+
+        {isOverspent ? (
+          <div className="flex justify-end pt-1 border-t border-border/40">
             <Link
-              href="/sobres"
+              href={`/sobres?cubrir=${category.categoryId}`}
               className={`inline-flex items-center justify-center rounded-md ${coverButtonColor} px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition-transform hover:opacity-90 active:scale-95 shrink-0`}
             >
               {es.inicio.coverOverspend}
             </Link>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
-
-      {hasBudget ? (
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted-background">
-          <div
-            className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
-            style={{ width: `${availablePercentage}%` }}
-          />
-        </div>
-      ) : null}
     </li>
   );
 }
@@ -295,11 +247,32 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
     dashboard.categories.length > 0 &&
     dashboard.categories.every((category) => category.spentCents === '0');
 
-  const overspentCategories = dashboard.categories.filter((cat) => cat.status === 'overspent');
-  const activeCategories = dashboard.categories.filter(
-    (cat) => cat.status === 'available' || cat.status === 'depleted',
-  );
-  const noBudgetCategories = dashboard.categories.filter((cat) => cat.status === 'no_budget');
+  // Ordenamiento explícito:
+  // 1. overspent: mayor déficit primero
+  const overspentCategories = [...dashboard.categories]
+    .filter((cat) => cat.status === 'overspent')
+    .sort((a, b) => {
+      const diff = BigInt(a.availableCents) - BigInt(b.availableCents);
+      if (diff < 0n) return -1;
+      if (diff > 0n) return 1;
+      return a.name.localeCompare(b.name, 'es');
+    });
+
+  // 2. depleted: orden alfabético
+  const depletedCategories = [...dashboard.categories]
+    .filter((cat) => cat.status === 'depleted')
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+  // 3. available: orden alfabético estable
+  const availableCategories = [...dashboard.categories]
+    .filter((cat) => cat.status === 'available')
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+  // 4. no_budget: orden alfabético al fondo
+  const noBudgetCategories = [...dashboard.categories]
+    .filter((cat) => cat.status === 'no_budget')
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
   const hasCoveringFunds = dashboard.categories.some(
     (c) => c.status !== 'overspent' && BigInt(c.availableCents) > 0n,
   );
@@ -309,7 +282,7 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted">{es.inicio.envelopesTitle}</p>
         <Link href="/sobres" className="text-xs font-medium text-primary underline">
-          {es.inicio.assignAction}
+          {es.inicio.viewEnvelopes}
         </Link>
       </div>
 
@@ -317,7 +290,7 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
         <EmptyState tone="exito" title={es.inicio.noExpensesYet} />
       ) : (
         <ul className="flex flex-col gap-2 min-w-0">
-          {/* 1. Categorias en sobregiro primero */}
+          {/* 1. overspent */}
           {overspentCategories.map((category) => (
             <EnvelopeProgressItem
               key={category.categoryId}
@@ -326,8 +299,8 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
             />
           ))}
 
-          {/* 2. Categorias activas con presupuesto */}
-          {activeCategories.map((category) => (
+          {/* 2. depleted */}
+          {depletedCategories.map((category) => (
             <EnvelopeProgressItem
               key={category.categoryId}
               category={category}
@@ -335,7 +308,16 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
             />
           ))}
 
-          {/* 3. Categorias sin presupuesto (colapsadas) */}
+          {/* 3. available */}
+          {availableCategories.map((category) => (
+            <EnvelopeProgressItem
+              key={category.categoryId}
+              category={category}
+              hasCoveringFunds={hasCoveringFunds}
+            />
+          ))}
+
+          {/* 4. no_budget */}
           {noBudgetCategories.length > 0 ? (
             <li className="pt-1">
               <button
@@ -343,7 +325,7 @@ function CategoriesSummaryBlock({ dashboard }: { dashboard: DashboardResponse })
                 onClick={() => setShowNoBudget((prev) => !prev)}
                 className="w-full text-left text-xs text-muted underline"
               >
-                {`${noBudgetCategories.length}${es.inicio.noBudgetCountSuffix}`}
+                {es.inicio.noBudgetCount(noBudgetCategories.length)}
               </button>
               {showNoBudget ? (
                 <ul className="mt-2 flex flex-col gap-2 min-w-0">
@@ -423,6 +405,7 @@ function AccountsBlock({ dashboard }: { dashboard: DashboardResponse }) {
 
 export function InicioView() {
   const { data, isLoading, error } = useDashboard();
+  const [unassignedSheetOpen, setUnassignedSheetOpen] = useState(false);
 
   if (isLoading || !data) {
     return (
@@ -440,21 +423,34 @@ export function InicioView() {
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-5 p-4 min-w-0">
-      {data.unbudgetedTransactions.length > 0 ? (
+      {data.unbudgetedTransactions.length > 0 && data.unbudgetedTransactions[0] ? (
         <Banner
-          message={`${data.unbudgetedTransactions.length}${es.inicio.unbudgetedSuffix}`}
+          message={es.inicio.unbudgetedBanner(data.unbudgetedTransactions.length)}
           action={
-            <Link href="/movimientos" className="text-sm font-medium text-primary underline">
-              {es.inicio.viewPending}
+            <Link
+              href={`/movimientos/${data.unbudgetedTransactions[0].transactionId}`}
+              className="text-sm font-medium text-primary underline active:scale-95 inline-flex items-center gap-1"
+            >
+              <span>{es.inicio.viewPending}</span>
+              <span aria-hidden="true" className="text-xs">›</span>
             </Link>
           }
         />
       ) : null}
 
       <PeriodHeader dashboard={data} />
-      <HeroCard dashboard={data} />
+      <HeroCard
+        dashboard={data}
+        onOpenUnassignedSheet={() => setUnassignedSheetOpen(true)}
+      />
       <CategoriesSummaryBlock dashboard={data} />
       <AccountsBlock dashboard={data} />
+
+      <UnassignedFundsSheet
+        open={unassignedSheetOpen}
+        onClose={() => setUnassignedSheetOpen(false)}
+        dashboard={data}
+      />
     </div>
   );
 }

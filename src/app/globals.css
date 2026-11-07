@@ -86,6 +86,7 @@
   --font-size-3xl: 1.875rem;  /* 30px */
   --font-size-4xl: 2.25rem;   /* 36px */
   --font-size-hero: 2.5rem;   /* 40px */
+  --font-size-cents: 0.8em;   /* escala relativa para decimales en cualquier tamaño */
 
   /*
    * Radios de borde con curvatura generosa según dirección visual
@@ -135,4 +136,24 @@ body {
    * no afecta texto no numérico y ayuda a cualquier lista de números, no solo dinero.
    */
   font-variant-numeric: tabular-nums;
+}
+
+.progress-deficit-coverable {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--state-depleted) 0,
+    var(--state-depleted) 3px,
+    transparent 3px,
+    transparent 7px
+  );
+}
+
+.progress-deficit-danger {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--state-overspent) 0,
+    var(--state-overspent) 3px,
+    transparent 3px,
+    transparent 7px
+  );
 }

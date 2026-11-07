@@ -37,6 +37,7 @@ const config: Config = {
         '3xl': 'var(--font-size-3xl)',
         '4xl': 'var(--font-size-4xl)',
         hero: 'var(--font-size-hero)',
+        cents: 'var(--font-size-cents)',
       },
       borderRadius: {
         xs: 'var(--radius-xs)',

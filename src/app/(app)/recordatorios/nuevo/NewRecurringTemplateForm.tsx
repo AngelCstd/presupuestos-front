@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AmountInput } from '@/components/money/AmountInput';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
@@ -24,6 +24,15 @@ export function NewRecurringTemplateForm() {
   const [amountCents, setAmountCents] = useState('0');
   const [dayOfMonth, setDayOfMonth] = useState('1');
   const [error, setError] = useState<string | null>(null);
+
+  const sortedCategories = useMemo(
+    () => [...(categories?.data ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    [categories?.data],
+  );
+  const sortedAccounts = useMemo(
+    () => [...(accounts?.data ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    [accounts?.data],
+  );
 
   const createTemplate = useCreateRecurringTemplate();
 
@@ -66,7 +75,7 @@ export function NewRecurringTemplateForm() {
           <option value="" disabled>
             Elige uno
           </option>
-          {categories?.data.map((category) => (
+          {sortedCategories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
             </option>
@@ -81,7 +90,7 @@ export function NewRecurringTemplateForm() {
           onChange={(event) => setAccountId(event.target.value)}
         >
           <option value="">Ninguna</option>
-          {accounts?.data.map((account) => (
+          {sortedAccounts.map((account) => (
             <option key={account.id} value={account.id}>
               {account.name}
             </option>

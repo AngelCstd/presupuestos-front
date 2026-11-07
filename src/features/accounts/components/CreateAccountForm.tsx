@@ -21,7 +21,7 @@ export function CreateAccountForm({ open, onClose }: { open: boolean; onClose: (
   const createAccount = useCreateAccount();
 
   return (
-    <Sheet open={open} onClose={onClose} title="Nueva cuenta">
+    <Sheet open={open} onClose={onClose} title={es.accountsView.newAccountTitle}>
       <form
         className="flex flex-col gap-4"
         onSubmit={(event) => {
@@ -37,11 +37,16 @@ export function CreateAccountForm({ open, onClose }: { open: boolean; onClose: (
           );
         }}
       >
-        <Field label="Nombre">
-          <Input value={name} onChange={(event) => setName(event.target.value)} required />
+        <Field label={es.accountsView.nameLabel}>
+          <Input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder={es.accountsView.namePlaceholder}
+            required
+          />
         </Field>
 
-        <Field label="Tipo">
+        <Field label={es.accountsView.kindLabel}>
           <div className="flex gap-2">
             {(Object.keys(KIND_LABELS) as RealAccountKind[]).map((option) => (
               <Button
@@ -57,9 +62,14 @@ export function CreateAccountForm({ open, onClose }: { open: boolean; onClose: (
           </div>
         </Field>
 
-        <Button type="submit" loading={createAccount.isPending}>
-          Crear
-        </Button>
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={createAccount.isPending}>
+            {es.accountsView.createAction}
+          </Button>
+        </div>
       </form>
     </Sheet>
   );

@@ -27,9 +27,11 @@ export function Money({ cents, currency, className, compactDecimals = true }: Mo
     const main = formatted.slice(0, splitIdx);
     const decimals = formatted.slice(splitIdx);
     return (
-      <span className={className}>
-        <span>{main}</span>
-        <span className="text-[0.8em] font-normal opacity-75">{decimals}</span>
+      <span className={className} aria-label={formatted}>
+        <span aria-hidden="true">{main}</span>
+        <span aria-hidden="true" className="text-cents font-normal">
+          {decimals}
+        </span>
       </span>
     );
   }

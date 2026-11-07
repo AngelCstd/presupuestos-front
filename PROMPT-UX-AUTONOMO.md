@@ -110,12 +110,15 @@ Esto es binario. Ejecútalo entero al cerrar cada pantalla y pega el resultado e
 | G1 | `tsc --noEmit` | Cero errores |
 | G2 | La suite existente | Verde, y **sin un solo archivo de test modificado** (`git diff --stat` sobre los tests debe salir vacío) |
 | G3 | Build de producción | Compila |
-| G4 | `grep -rE '#[0-9a-fA-F]{3,8}' src/ --include=*.tsx --include=*.ts` | Cero coincidencias fuera de la definición de tokens |
+| G4 | Cero valores crudos o arbitrarios en `src/` | 1) Cero hex fuera de tokens (`grep -rE '#[0-9a-fA-F]{3,8}' src/`). 2) Cero clases arbitrarias de Tailwind con corchetes (`grep -rnE '[a-z0-9-]+-\[[^\]]+\]' src/ --include=*.tsx --include=*.ts`). Todo valor visual debe provenir de tokens o escala estándar. |
 | G5 | Strings de usuario fuera de `lib/i18n/` | Cero. Revisa los `.tsx` que tocaste en esta pantalla |
-| G6 | Vocabulario prohibido en `lib/i18n/es.ts` | Cero: `movimiento contable`, `asiento`, `partida doble`, `entry`, `ledger`, `rollover`, `compensated`, `overspent`, `no_budget` |
+| G6 | Vocabulario prohibido en `lib/i18n/es.ts` y componentes | Cero: `movimiento contable`, `asiento`, `partida doble`, `entry`, `ledger`, `rollover`, `overspent`, `no_budget`, kinds/enums de la API (`cash`, `credit`, `receivable`, `category`, `income_source`, `in_open_period`, `compensated`, `uncompensated`, `no_period`, `accumulate`, `reset`, `carry_forward`, `release`, `carry_deficit`), `dinero real` (término interno del contrato), y `disponible` usado fuera de su significado canónico (únicamente reservado para el badge/estado de sobre y `availableCents`). |
 | G7 | Llamadas de red de la pantalla | Las declaradas en su brief, ni una más |
 | G8 | Ausencia de desborde y capturas (360px, 390px, 768px) | Con el viewport fijado en el navegador a cada ancho, pasa la aserción mecánica: `document.documentElement.scrollWidth <= window.innerWidth`. Se reporta el valor de `innerWidth` y `scrollWidth` de cada corrida (rojo si falla). Las capturas en `ux/<pantalla>/` existen para revisión de Luis. |
 | G9 | Imports | Todo lo importado existe en el `INVENTARIO.md` o lo creaste en esta corrida |
+| G10 | Despeje inferior mecánico frente a elementos fijos (360px, 390px, 768px) | A cada uno de los tres anchos: scroll hasta el fondo, toma el último elemento de contenido de la vista y la barra fija (contando el botón central que sobresale), y asegura que `ultimoElemento.getBoundingClientRect().bottom <= tabBar.getBoundingClientRect().top`. Se reportan los dos valores de cada corrida (rojo si falla). |
+| G11 | Referencias internas en texto de usuario | Cero coincidencias en strings visibles al usuario (en `lib/i18n/es.ts` y `.tsx`): `.md`, `§`, `ARCHITECTURE`, `API-CONTRACT`, `SCREENS`, `TASK-`, `INVENTARIO`. Reglas técnicas van en comentarios de código, nunca en pantalla. |
+| G12 | Scripts de captura sin HTML y contra app real | Cero cadenas HTML en scripts bajo `scripts/capture_*` (`<` y `>` simulando tags prohibidos). Navegación obligatoria con `page.goto('http://localhost:...')` a la ruta real de la aplicación en ejecución. Reporte obligatorio de URL exacta visitada y tiempo de respuesta. |
 
 G2 es la más importante: esos tests son lo único que impide que una mejora visual rompa la
 aritmética del dinero. **Si crees que un test está mal, detente y dímelo.** Editarlo es

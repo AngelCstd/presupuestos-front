@@ -4,17 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Field } from '@/components/ui/Field';
 import { Skeleton } from '@/components/states/Skeleton';
 import { useMe } from '@/features/profile/hooks/useMe';
 import { useUpdateTimezone } from '@/features/profile/hooks/useUpdateTimezone';
 import { ApiError } from '@/lib/api/errors';
 import { errorMessageFor } from '@/lib/i18n/errors';
+import { es } from '@/lib/i18n/es';
 
-/**
- * `Intl.supportedValuesOf('timeZone')` es nativo (ECMA-402) — la lista real de zonas
- * IANA sin agregar ninguna dependencia (TASK-front.md U0: nada nuevo sin preguntar).
- */
 const TIMEZONES = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
 
 export function ProfileSection() {
@@ -22,6 +18,7 @@ export function ProfileSection() {
   const { data: me, isLoading } = useMe();
   const updateTimezone = useUpdateTimezone();
 
+  const [isEditing, setIsEditing] = useState(false);
   const [selected, setSelected] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,47 +30,84 @@ export function ProfileSection() {
   if (isLoading || !me) {
     return (
       <div className="flex flex-col gap-2">
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-4 w-1/2" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Field label="Correo">
-        <p className="text-foreground">{me.email}</p>
-      </Field>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted">{es.masView.emailLabel}</span>
+        <span className="font-medium text-foreground">{me.email}</span>
+      </div>
 
-      <Field label="Zona horaria">
-        <select
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground"
-          value={selected}
-          onChange={(event) => setSelected(event.target.value)}
-        >
-          {TIMEZONES.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-xs">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-muted">{es.masView.timezoneLabel}</span>
+          <span className="font-medium text-foreground">{me.timezone}</span>
+        </div>
+        {!isEditing && (
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="text-xs font-semibold text-primary hover:underline active:scale-95 transition-transform"
+          >
+            {es.masView.changeTimezoneAction}
+          </button>
+        )}
+      </div>
 
-      {error ? (
-        <p role="alert" className="text-sm text-danger">
-          {errorMessageFor(error)}
-        </p>
+      {isEditing ? (
+        <div className="flex flex-col gap-2.5 rounded-lg border border-border/70 bg-muted-background/30 p-3 pt-2">
+          <select
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            value={selected}
+            onChange={(event) => setSelected(event.target.value)}
+          >
+            {TIMEZONES.map((zone) => (
+              <option key={zone} value={zone}>
+                {zone}
+              </option>
+            ))}
+          </select>
+
+          {error ? (
+            <p role="alert" className="text-xs text-danger">
+              {errorMessageFor(error)}
+            </p>
+          ) : null}
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setSelected(me.timezone);
+                setIsEditing(false);
+              }}
+            >
+              {es.masView.cancelAction}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={selected === me.timezone}
+              onClick={() => setConfirming(true)}
+            >
+              {es.masView.saveTimezoneAction}
+            </Button>
+          </div>
+        </div>
       ) : null}
-
-      <Button type="button" variant="secondary" disabled={selected === me.timezone} onClick={() => setConfirming(true)}>
-        Guardar
-      </Button>
 
       <ConfirmDialog
         open={confirming}
-        title="Cambiar zona horaria"
-        message="Esto cambia en qué periodo caen los gastos que captures a partir de ahora — el punto en que empieza y termina 'hoy' se mueve con la zona horaria."
-        confirmLabel="Cambiar"
+        title={es.masView.timezoneDialogTitle}
+        message={es.masView.timezoneDialogMessage}
+        confirmLabel={es.masView.timezoneDialogConfirm}
         loading={updateTimezone.isPending}
         onCancel={() => setConfirming(false)}
         onConfirm={() => {
@@ -81,6 +115,7 @@ export function ProfileSection() {
           updateTimezone.mutate(selected, {
             onSuccess: () => {
               setConfirming(false);
+              setIsEditing(false);
               router.refresh();
             },
             onError: (mutationError) => {

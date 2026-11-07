@@ -25,9 +25,11 @@ export function Balance({ cents, kind, className, compactDecimals = true }: Bala
       const main = amount.slice(0, splitIdx);
       const decimals = amount.slice(splitIdx);
       formattedAmount = (
-        <span>
-          <span>{main}</span>
-          <span className="text-[0.8em] font-normal opacity-75">{decimals}</span>
+        <span aria-label={amount}>
+          <span aria-hidden="true">{main}</span>
+          <span aria-hidden="true" className="text-cents font-normal">
+            {decimals}
+          </span>
         </span>
       );
     }

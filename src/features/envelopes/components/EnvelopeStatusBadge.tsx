@@ -18,6 +18,10 @@ const STATUS_CLASSES: Record<EnvelopeStatus, string> = {
  * está en el lugar equivocado").
  */
 export function EnvelopeStatusBadge({ status }: { status: EnvelopeStatus }) {
+  if (status === 'available') {
+    return null;
+  }
+
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[status]}`}
