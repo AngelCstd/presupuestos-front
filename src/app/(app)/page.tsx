@@ -11,10 +11,17 @@ import { InicioView } from './InicioView';
  */
 export default async function InicioPage() {
   const queryClient = new QueryClient();
-  await queryClient.prefetchQuery({
-    queryKey: qk.dashboard(null),
-    queryFn: () => serverApi.getDashboard(),
-  });
+  try {
+    console.log('[InicioPage] Prefetching dashboard data from server...');
+    await queryClient.prefetchQuery({
+      queryKey: qk.dashboard(null),
+      queryFn: () => serverApi.getDashboard(),
+    });
+    console.log('[InicioPage] Dashboard prefetch complete.');
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[InicioPage Prefetch Error]:', message);
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

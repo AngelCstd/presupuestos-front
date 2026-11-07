@@ -37,7 +37,9 @@ export async function apiRequest<T>(
   params: ApiRequestParams,
   fetchImpl: typeof fetch = fetch,
 ): Promise<T> {
-  const url = `${process.env.API_BASE_URL ?? ''}${params.path}`;
+  const baseUrl = process.env.API_BASE_URL ?? '';
+  const url = `${baseUrl}${params.path}`;
+  console.log(`[API REQUEST] ${params.method} -> ${url}`);
 
   const headers = new Headers();
   headers.set('authorization', `Bearer ${params.accessToken}`);
@@ -45,11 +47,20 @@ export async function apiRequest<T>(
   if (params.idempotencyKey) headers.set('idempotency-key', params.idempotencyKey);
 
   for (let attempt = 1; ; attempt += 1) {
-    const response = await fetchImpl(url, {
-      method: params.method,
-      headers,
-      body: params.body !== undefined ? JSON.stringify(params.body) : undefined,
-    });
+    let response: Response;
+    try {
+      response = await fetchImpl(url, {
+        method: params.method,
+        headers,
+        body: params.body !== undefined ? JSON.stringify(params.body) : undefined,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[API NETWORK ERROR] Failed fetching ${url}:`, message);
+      throw new ApiError('NETWORK_ERROR', 500, [{ field: 'network', constraint: message }]);
+    }
+
+    console.log(`[API RESPONSE] Status ${response.status} from ${url}`);
 
     // 204 No Content (p.ej. DELETE /periods/{id}/allocations/{allocationId},
     // API-CONTRACT.md §12.2) no tiene cuerpo por diseño — nunca se le pide `.json()`.
@@ -57,9 +68,13 @@ export async function apiRequest<T>(
       return null as T;
     }
 
-    const body: unknown = await response.json();
+    const body: unknown = await response.json().catch(async () => {
+      const text = await response.text().catch(() => '');
+      return { code: 'PARSE_ERROR', statusCode: response.status, details: text };
+    });
 
     if (isInFlightError(response.status, body) && attempt <= MAX_RETRIES) {
+      console.warn(`[API IN FLIGHT] Retrying ${url} (attempt ${attempt})`);
       await delay(RETRY_DELAY_MS);
       continue;
     }
@@ -68,6 +83,7 @@ export async function apiRequest<T>(
       return body as T;
     }
 
+    console.error(`[API ERROR BODY] Status ${response.status} from ${url}:`, JSON.stringify(body));
     const errorBody = body as ApiErrorBody;
     throw new ApiError(errorBody.code, errorBody.statusCode, errorBody.details);
   }
